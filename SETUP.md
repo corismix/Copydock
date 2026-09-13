@@ -1,3 +1,8 @@
+> **Fork note (Stash):** bundle identifiers are `dev.corismix.stash*` and the iCloud
+> container is `iCloud.dev.corismix.stash`. `DEVELOPMENT_TEAM` is intentionally blank —
+> in Xcode select your own (free) team under Signing & Capabilities for each target you build.
+> CI builds macOS ad-hoc signed and attaches a dmg.
+
 # Project Setup Guide
 
 This guide covers the one-time Xcode configuration steps required before you can build and run the iOS targets. The macOS target (`Paste`) works out of the box with no additional setup.
