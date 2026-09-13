@@ -18,7 +18,7 @@ final class iOSAppSettings: ObservableObject {
     static let pinboardCountMax = 10
 
     private init() {
-        let ud = UserDefaults(suiteName: "group.dev.corismix.stash") ?? .standard
+        let ud = UserDefaults(suiteName: "group.dev.corismix.copydock") ?? .standard
         defaults = ud
 
         // Kick off iCloud KV sync and load persisted custom types.
@@ -239,7 +239,7 @@ final class iOSAppSettings: ObservableObject {
     /// Shown under the iCloud toggle (CloudKit account status).
     @Published var iCloudAccountStatusMessage: String = ""
 
-    private static let cloudKitContainerID = "iCloud.dev.corismix.stash"
+    private static let cloudKitContainerID = "iCloud.dev.corismix.copydock"
 
     /// Refreshes `iCloudAccountStatusMessage` from CloudKit (call from Settings).
     func refreshICloudAccountStatus() {
@@ -319,7 +319,7 @@ final class iOSAppSettings: ObservableObject {
     // MARK: - Database
 
     func getDatabaseSize() -> String {
-        let groupID = "group.dev.corismix.stash"
+        let groupID = "group.dev.corismix.copydock"
         guard let groupURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: groupID
         ) else { return NSLocalizedString("preferences.databaseSize.unknown", comment: "") }

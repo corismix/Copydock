@@ -5,7 +5,7 @@
 // and the keyboard extension read/write the same SQLite store.
 // Uses NSPersistentCloudKitContainer for iCloud sync when enabled.
 //
-// App Group ID: group.dev.corismix.stash
+// App Group ID: group.dev.corismix.copydock
 // Add this file to: Paste-iOS target AND Paste-Keyboard target.
 
 import CoreData
@@ -13,7 +13,7 @@ import OSLog
 
 final class SharedCoreDataStack {
 
-    private static let log = Logger(subsystem: "dev.corismix.stash", category: "SharedCoreDataStack")
+    private static let log = Logger(subsystem: "dev.corismix.copydock", category: "SharedCoreDataStack")
 
     static let shared = SharedCoreDataStack()
 
@@ -26,11 +26,11 @@ final class SharedCoreDataStack {
     // MARK: - iCloud settings
 
     private var iCloudSyncEnabled: Bool {
-        let ud = UserDefaults(suiteName: "group.dev.corismix.stash") ?? .standard
+        let ud = UserDefaults(suiteName: "group.dev.corismix.copydock") ?? .standard
         return ud.bool(forKey: "iCloudSyncEnabled")
     }
 
-    private static let iCloudContainerID = "iCloud.dev.corismix.stash"
+    private static let iCloudContainerID = "iCloud.dev.corismix.copydock"
 
     private var isAppExtension: Bool {
         Bundle.main.bundlePath.hasSuffix(".appex")
@@ -57,7 +57,7 @@ final class SharedCoreDataStack {
             }
         }
 
-        let groupID = "group.dev.corismix.stash"
+        let groupID = "group.dev.corismix.copydock"
         if let groupURL = FileManager.default.containerURL(
             forSecurityApplicationGroupIdentifier: groupID
         ) {

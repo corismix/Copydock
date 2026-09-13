@@ -1,5 +1,5 @@
-> **Fork note (Stash):** bundle identifiers are `dev.corismix.stash*` and the iCloud
-> container is `iCloud.dev.corismix.stash`. `DEVELOPMENT_TEAM` is intentionally blank —
+> **Fork note (Copydock):** bundle identifiers are `dev.corismix.copydock*` and the iCloud
+> container is `iCloud.dev.corismix.copydock`. `DEVELOPMENT_TEAM` is intentionally blank —
 > in Xcode select your own (free) team under Signing & Capabilities for each target you build.
 > CI builds macOS ad-hoc signed and attaches a dmg.
 

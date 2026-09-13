@@ -82,10 +82,10 @@
 "preferences.databaseSize.unknown" = "未知";
 "preferences.databaseSize.zero" = "0 KB";
 
-"about.appName" = "Stash";
+"about.appName" = "Copydock";
 "about.versionFormat" = "版本 %@";
 "about.tagline" = "一款简洁高效的 macOS 剪贴板管理工具";
-"about.copyrightFormat" = "© %d Stash";
+"about.copyrightFormat" = "© %d Copydock";
 "about.window.title" = "关于";
 "about.developedByFormat" = "由%@开发";
 "about.privacyPolicy" = "隐私政策";
@@ -171,8 +171,8 @@
 
 "status.menu.purchase" = "购买 Premium";
 
-"purchase.window.title" = "购买 Stash Premium";
-"purchase.title" = "升级到 Stash Premium";
+"purchase.window.title" = "购买 Copydock Premium";
+"purchase.title" = "升级到 Copydock Premium";
 "purchase.subtitle" = "解锁所有高级功能";
 "purchase.feature.iCloudSync" = "iCloud 同步";
 "purchase.feature.unlimitedHistory" = "无限历史记录";

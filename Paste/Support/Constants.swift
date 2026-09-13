@@ -12,9 +12,9 @@ enum Constants {
     
     // MARK: - App Info
     
-    static let appName = "Stash"
+    static let appName = "Copydock"
     static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.pastetool"
-    static let iCloudContainerIdentifier = "iCloud.dev.corismix.stash"
+    static let iCloudContainerIdentifier = "iCloud.dev.corismix.copydock"
     
     // MARK: - Clipboard
     

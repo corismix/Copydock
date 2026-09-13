@@ -1,13 +1,13 @@
 //
 //  paste_toolTests.swift
-//  StashTests
+//  CopydockTests
 //
 //  Unit tests for card classification and display helpers.
 //
 
 import Testing
 import Foundation
-@testable import Stash
+@testable import Copydock
 
 struct CardKindTests {
 

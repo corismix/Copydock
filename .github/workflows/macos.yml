@@ -39,22 +39,22 @@ jobs:
 
       - name: Package dmg
         run: |
-          APP="build/DerivedData/Build/Products/Release/Stash.app"
+          APP="build/DerivedData/Build/Products/Release/Copydock.app"
           test -d "$APP"
           VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
           STAGING="build/dmg-staging"
           mkdir -p dist
           rm -rf "$STAGING" && mkdir -p "$STAGING"
-          ditto "$APP" "$STAGING/Stash.app"
+          ditto "$APP" "$STAGING/Copydock.app"
           ln -s /Applications "$STAGING/Applications"
-          hdiutil create -volname Stash -srcfolder "$STAGING" -ov -format UDZO "dist/Stash-${VERSION}-macos.dmg"
-          shasum -a 256 "dist/Stash-${VERSION}-macos.dmg" > "dist/Stash-${VERSION}-macos.dmg.sha256"
+          hdiutil create -volname Copydock -srcfolder "$STAGING" -ov -format UDZO "dist/Copydock-${VERSION}-macos.dmg"
+          shasum -a 256 "dist/Copydock-${VERSION}-macos.dmg" > "dist/Copydock-${VERSION}-macos.dmg.sha256"
           echo "VERSION=$VERSION" >> "$GITHUB_ENV"
 
       - name: Upload app artifact
         uses: actions/upload-artifact@v4
         with:
-          name: Stash-macos-dmg
+          name: Copydock-macos-dmg
           path: dist/*.dmg
           if-no-files-found: error
 
@@ -67,4 +67,4 @@ jobs:
             dist/*.sha256
           body: |
             Unsigned/ad-hoc build. After downloading, either right-click → Open,
-            or clear quarantine: `xattr -dr com.apple.quarantine /Applications/Stash.app`
+            or clear quarantine: `xattr -dr com.apple.quarantine /Applications/Copydock.app`

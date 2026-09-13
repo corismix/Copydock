@@ -1,10 +1,10 @@
 <p align="center">
-  <img src="Paste/Assets.xcassets/AppIcon.appiconset/icon_256.png" alt="Stash app icon" width="192" height="192">
+  <img src="Paste/Assets.xcassets/AppIcon.appiconset/icon_256.png" alt="Copydock app icon" width="192" height="192">
 </p>
 
-# Stash — a Paste-style clipboard manager for macOS
+# Copydock — a Paste-style clipboard manager for macOS
 
-**Stash** is a fork of [gxlself/Paste](https://github.com/gxlself/Paste) rebuilt to look, feel,
+**Copydock** is a fork of [gxlself/Paste](https://github.com/gxlself/Paste) rebuilt to look, feel,
 and act like [Paste for macOS](https://pasteapp.io/): vivid color-coded cards in a bottom bar,
 a clipboard timeline you can search and filter, pinboards with color dots, Paste Stack,
 quick-paste shortcuts, and optional iCloud sync.
@@ -19,7 +19,7 @@ quick-paste shortcuts, and optional iCloud sync.
   verification codes don't turn into swatches.
 - **Toolbar** — search field with a filters menu, the current list ("Clipboard") picker,
   pinboard chips with color dots, an add (+) menu, and an actions (⋯) menu.
-- **Keyboard-first** — `⇧⌘V` shows Stash, `⇧⌘C` activates Paste Stack, `⌘1–9` quick-pastes,
+- **Keyboard-first** — `⇧⌘V` shows Copydock, `⇧⌘C` activates Paste Stack, `⌘1–9` quick-pastes,
   `Space` Quick Looks, `⌘E` edits, `⌘R` renames, `⌘N` new text item, `⇧⌘N` new pinboard,
   `⌘T` pauses, `⌘,` settings, `⌘Q` quits. `⇧Return` pastes as plain text.
 
@@ -27,15 +27,15 @@ quick-paste shortcuts, and optional iCloud sync.
 
 | Platform | What it is |
 |----------|------------|
-| macOS — `Paste` scheme (builds **Stash.app**) | Menu bar app: clipboard history, global hotkeys, overlay panel, Paste Stack, Pinboards, optional iCloud sync |
+| macOS — `Paste` scheme (builds **Copydock.app**) | Menu bar app: clipboard history, global hotkeys, overlay panel, Paste Stack, Pinboards, optional iCloud sync |
 | iOS — `Paste-iOS` | Companion app (see SETUP.md for signing/App Group setup) |
 
 ## Download
 
-Grab the latest **Stash-*-macos.dmg** from
-[Releases](https://github.com/corismix/Paste/releases), drag Stash into Applications.
+Grab the latest **Copydock-*-macos.dmg** from
+[Releases](https://github.com/corismix/Paste/releases), drag Copydock into Applications.
 Builds are ad-hoc signed: right-click → Open, or
-`xattr -dr com.apple.quarantine /Applications/Stash.app`.
+`xattr -dr com.apple.quarantine /Applications/Copydock.app`.
 
 ## Build
 

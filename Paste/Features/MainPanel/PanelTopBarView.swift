@@ -1,6 +1,6 @@
 //
 //  PanelTopBarView.swift
-//  Stash
+//  Copydock
 //
 //  Toolbar for the main panel, styled after Paste for macOS:
 //  search field on the left, then the current list ("Clipboard") menu,

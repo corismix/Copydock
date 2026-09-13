@@ -1,6 +1,6 @@
 //
 //  ClipboardCardView.swift
-//  Stash
+//  Copydock
 //
 //  Card view for individual clipboard history items, styled after Paste for macOS:
 //  a vivid color header with the item kind, relative time and source-app icon,

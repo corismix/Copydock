@@ -130,7 +130,7 @@ struct AboutView: View {
     private var appName: String {
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
         ?? (Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String)
-        ?? String(localized: "about.appName", defaultValue: "Stash")
+        ?? String(localized: "about.appName", defaultValue: "Copydock")
     }
     
     private var versionText: String {
