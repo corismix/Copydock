@@ -31,7 +31,7 @@ struct ContentView: View {
     @FocusState private var isSearchFieldFocused: Bool
 
     private static let filterOrder: [ClipboardItemType?] = [nil, .text, .image, .file]
-    private static let pasteWebsiteURL = URL(string: "https://paste.gxlself.com")!
+    private static let pasteWebsiteURL = URL(string: "https://github.com/corismix/Paste")!
 
     private var totalPageCount: Int {
         Self.filterOrder.count + viewModel.settings.pinboardCount

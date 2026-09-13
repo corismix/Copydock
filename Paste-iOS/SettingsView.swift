@@ -7,7 +7,7 @@ import SwiftUI
 
 struct SettingsView: View {
 
-    private static let pasteWebsiteURL = URL(string: "https://paste.gxlself.com")!
+    private static let pasteWebsiteURL = URL(string: "https://github.com/corismix/Paste")!
     private static let appStoreGCalcProURL = URL(string: "https://apps.apple.com/us/app/g-calc-pro/id6759799669")!
     private static let appStoreStayAboveKillLineURL = URL(string: "https://apps.apple.com/us/app/stay-above-kill-line/id6759259799")!
 
@@ -398,7 +398,7 @@ struct SettingsView: View {
         let body = String(localized: "ios.support.emailBody")
         var components = URLComponents()
         components.scheme = "mailto"
-        components.path = "gxlself@gmail.com"
+        components.path = "corismix@gmail.com"
         components.queryItems = [
             URLQueryItem(name: "subject", value: subject),
             URLQueryItem(name: "body", value: body),

@@ -21,6 +21,16 @@ enum AppNotification {
     static let requestClosePanel    = Notification.Name("requestClosePanel")
     /// The user's selected clipboard item index changed; the preview window should update.
     static let selectedIndexChanged  = Notification.Name("selectedIndexChanged")
+    /// Request toggling the Quick Look preview window for the current selection.
+    static let requestTogglePreview   = Notification.Name("requestTogglePreview")
+    /// Request pausing/resuming clipboard monitoring.
+    static let requestTogglePause     = Notification.Name("requestTogglePause")
+    /// Request showing the preferences window.
+    static let requestShowPreferences = Notification.Name("requestShowPreferences")
+    /// Request showing the about window.
+    static let requestShowAbout       = Notification.Name("requestShowAbout")
+    /// Request quitting the app.
+    static let requestQuit            = Notification.Name("requestQuit")
     /// A clipboard card drag gesture began; object is the ClipboardItemModel being dragged.
     static let clipboardItemDragBegan = Notification.Name("clipboardItemDragBegan")
     /// A clipboard card drag gesture ended; userInfo["location"] carries the drop NSPoint.

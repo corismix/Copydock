@@ -1,0 +1,70 @@
+name: macOS
+
+on:
+  push:
+    branches: [main]
+    tags: ['v*']
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+
+jobs:
+  build-test:
+    runs-on: macos-26
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Select Xcode
+        run: sudo xcode-select -s /Applications/Xcode.app/Contents/Developer
+
+      - name: Build (ad-hoc signed)
+        run: |
+          xcodebuild -project Paste.xcodeproj -scheme Paste \
+            -configuration Release \
+            -destination 'generic/platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            -skipPackagePluginValidation \
+            CODE_SIGN_IDENTITY="-" DEVELOPMENT_TEAM="" \
+            build
+
+      - name: Test
+        run: |
+          xcodebuild -project Paste.xcodeproj -scheme Paste \
+            -configuration Debug \
+            -destination 'platform=macOS' \
+            -derivedDataPath build/DerivedData \
+            -skipPackagePluginValidation \
+            CODE_SIGNING_ALLOWED=NO \
+            test
+
+      - name: Package dmg
+        run: |
+          APP="build/DerivedData/Build/Products/Release/Stash.app"
+          test -d "$APP"
+          VERSION=$(/usr/libexec/PlistBuddy -c 'Print CFBundleShortVersionString' "$APP/Contents/Info.plist")
+          STAGING="build/dmg-staging"
+          mkdir -p dist
+          rm -rf "$STAGING" && mkdir -p "$STAGING"
+          ditto "$APP" "$STAGING/Stash.app"
+          ln -s /Applications "$STAGING/Applications"
+          hdiutil create -volname Stash -srcfolder "$STAGING" -ov -format UDZO "dist/Stash-${VERSION}-macos.dmg"
+          shasum -a 256 "dist/Stash-${VERSION}-macos.dmg" > "dist/Stash-${VERSION}-macos.dmg.sha256"
+          echo "VERSION=$VERSION" >> "$GITHUB_ENV"
+
+      - name: Upload app artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: Stash-macos-dmg
+          path: dist/*.dmg
+          if-no-files-found: error
+
+      - name: Publish release
+        if: startsWith(github.ref, 'refs/tags/v')
+        uses: softprops/action-gh-release@v2
+        with:
+          files: |
+            dist/*.dmg
+            dist/*.sha256
+          body: |
+            Unsigned/ad-hoc build. After downloading, either right-click → Open,
+            or clear quarantine: `xattr -dr com.apple.quarantine /Applications/Stash.app`

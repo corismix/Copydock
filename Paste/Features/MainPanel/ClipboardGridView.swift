@@ -43,7 +43,12 @@ struct ClipboardGridView: View {
                                     onRemoveFromPasteStack: { viewModel.removeFromPasteStack(item) },
                                     isPasteStackMode: viewModel.panelMode == .pasteStack,
                                     onDelete: { viewModel.deleteItem(item) },
-                                    onEdit: { viewModel.selectedIndex = index; viewModel.showEditSheet = true }
+                                    onEdit: { viewModel.selectedIndex = index; viewModel.showEditSheet = true },
+                                    onRename: { viewModel.selectedIndex = index; viewModel.showRenameSheet = true },
+                                    onCopy: { viewModel.copyItem(item) },
+                                    onQuickLook: { viewModel.selectedIndex = index; NotificationCenter.default.post(name: AppNotification.requestTogglePreview, object: nil) },
+                                    onOpen: { viewModel.openItem(item) },
+                                    onNewPinboard: { viewModel.createNewPinboard() }
                                 )
                                 .overlay(alignment: .topLeading) { quickPasteHint(for: index) }
                                 .id(displayItem.id)
@@ -157,7 +162,12 @@ struct ClipboardGridVerticalView: View {
                                 onRemoveFromPasteStack: { viewModel.removeFromPasteStack(item) },
                                 isPasteStackMode: viewModel.panelMode == .pasteStack,
                                 onDelete: { viewModel.deleteItem(item) },
-                                onEdit: { viewModel.selectedIndex = index; viewModel.showEditSheet = true }
+                                onEdit: { viewModel.selectedIndex = index; viewModel.showEditSheet = true },
+                                onRename: { viewModel.selectedIndex = index; viewModel.showRenameSheet = true },
+                                onCopy: { viewModel.copyItem(item) },
+                                onQuickLook: { viewModel.selectedIndex = index; NotificationCenter.default.post(name: AppNotification.requestTogglePreview, object: nil) },
+                                onOpen: { viewModel.openItem(item) },
+                                onNewPinboard: { viewModel.createNewPinboard() }
                             )
                             .overlay(alignment: .topLeading) { quickPasteHint(for: index) }
                             .id(displayItem.id)

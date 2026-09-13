@@ -1,8 +1,10 @@
 //
 //  ClipboardCardView.swift
-//  Paste
+//  Stash
 //
-//  Card view for individual clipboard history items.
+//  Card view for individual clipboard history items, styled after Paste for macOS:
+//  a vivid color header with the item kind, relative time and source-app icon,
+//  a content body, and a metadata footer.
 //
 
 import SwiftUI
@@ -15,10 +17,13 @@ func clipboardCardAccessibilityLabel(for item: ClipboardItemModel) -> String {
     let time = item.formattedTime
     switch item.itemType {
     case .text:
-        if let raw = item.plainText?.trimmingCharacters(in: .whitespacesAndNewlines),
-           !raw.contains("\n"),
-           ColorCodeHelper.color(from: raw) != nil {
+        let kind = CardKind(item: item)
+        if kind == .color {
+            let raw = item.plainText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
             return String(format: String(localized: "accessibility.mainpanel.card.colorFormat"), raw, time)
+        }
+        if kind == .link {
+            return String(format: String(localized: "accessibility.mainpanel.card.linkFormat"), CardKind.displayURL(item.plainText ?? ""), time)
         }
         let preview = String((item.displayText).prefix(50))
         let count = item.characterCount ?? 0
@@ -50,27 +55,44 @@ struct ClipboardCardView: View {
     let isPasteStackMode: Bool
     let onDelete: () -> Void
     var onEdit: (() -> Void)?
+    var onRename: (() -> Void)?
+    var onCopy: (() -> Void)?
+    var onQuickLook: (() -> Void)?
+    var onOpen: (() -> Void)?
+    var onNewPinboard: (() -> Void)?
 
     @State private var isHovered = false
     @State private var isDragging = false
     @Environment(\.cardSize) private var cardSize
 
+    private var kind: CardKind { CardKind(item: item) }
+
+    /// In a pinboard, headers take the pinboard's color; in history they take the source app's color.
+    private var headerColor: Color {
+        if let pinboard = activePinboardIndex {
+            return AppSettings.pinboardColor(at: pinboard)
+        }
+        return Color(nsColor: CardStyle.headerColor(for: item, kind: kind))
+    }
+
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
+            headerView
             contentView
-                .frame(height: cardSize.height - 32)
-
-            Divider()
-                .background(Color(nsColor: .separatorColor))
-
-            bottomBar
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                .background(Color(nsColor: .textBackgroundColor))
+            footerView
         }
         .frame(width: cardSize.width, height: cardSize.height)
-        .background(isSelected ? Color.accentColor.opacity(0.3) : Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 10))
+        .clipShape(RoundedRectangle(cornerRadius: 12))
+        .background(
+            RoundedRectangle(cornerRadius: 12)
+                .fill(Color(nsColor: .textBackgroundColor))
+        )
         .overlay(
-            RoundedRectangle(cornerRadius: 10)
-                .stroke(isSelected ? Color.accentColor : Color(nsColor: .separatorColor), lineWidth: isSelected ? 2 : 1)
+            RoundedRectangle(cornerRadius: 12)
+                .strokeBorder(isSelected ? Color.accentColor : Color.black.opacity(0.08),
+                              lineWidth: isSelected ? 2.5 : 0.5)
         )
         .overlay(alignment: .topLeading) {
             if isSelected {
@@ -81,8 +103,9 @@ struct ClipboardCardView: View {
                     .padding(6)
             }
         }
-        .shadow(color: .black.opacity(isDragging ? 0.5 : isSelected ? 0.3 : 0.1),
-                radius: isDragging ? 16 : isSelected ? 8 : 4)
+        .shadow(color: .black.opacity(isDragging ? 0.35 : isHovered ? 0.22 : 0.14),
+                radius: isDragging ? 16 : isHovered ? 10 : 6,
+                y: isDragging ? 8 : 3)
         .scaleEffect(isDragging ? 1.05 : isHovered ? 1.02 : 1.0)
         .animation(.easeInOut(duration: 0.12), value: isDragging)
         .animation(.easeInOut(duration: 0.15), value: isHovered)
@@ -111,32 +134,7 @@ struct ClipboardCardView: View {
                 }
             )
         )
-        .contextMenu {
-            Button("mainpanel.context.paste") { onPaste(AppSettings.pastePlainTextByDefault) }
-            if item.itemType == .text {
-                Button("mainpanel.edit.title") { onEdit?() }
-            }
-            Button("mainpanel.context.delete", role: .destructive) { onDelete() }
-            Divider()
-
-            if isPasteStackMode {
-                Button("mainpanel.context.removeFromPasteStack") { onRemoveFromPasteStack() }
-            } else {
-                Button("mainpanel.context.addToPasteStack") { onAddToPasteStack() }
-            }
-
-            if let current = activePinboardIndex {
-                Button("mainpanel.context.togglePinboardCurrent") { onTogglePinboard(current) }
-            }
-
-            Menu("mainpanel.context.pinboard") {
-                ForEach(0..<pinboardCount, id: \.self) { index in
-                    Button(AppSettings.pinboardName(at: index)) {
-                        onMoveToPinboard(index)
-                    }
-                }
-            }
-        }
+        .contextMenu { contextMenuContent }
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(clipboardCardAccessibilityLabel(for: item))
         .accessibilityHint(Text("accessibility.mainpanel.card.hint"))
@@ -151,12 +149,57 @@ struct ClipboardCardView: View {
         onPaste(shouldPlainText)
     }
 
-    // MARK: - Content View
+    // MARK: - Header
+
+    private var headerView: some View {
+        ZStack(alignment: .topTrailing) {
+            HStack(alignment: .center, spacing: 6) {
+                VStack(alignment: .leading, spacing: 1) {
+                    Text(kind.label)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundColor(.white)
+                        .lineLimit(1)
+                    Text(item.formattedTime)
+                        .font(.system(size: 10))
+                        .foregroundColor(.white.opacity(0.85))
+                        .lineLimit(1)
+                }
+                .padding(.leading, 12)
+                Spacer(minLength: 0)
+            }
+            .frame(maxWidth: .infinity, maxHeight: .infinity)
+
+            // Source app icon in a white tile, slightly overhanging the header edge.
+            if let appIcon = item.sourceAppIcon {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 16, height: 16)
+                    .padding(3)
+                    .background(
+                        RoundedRectangle(cornerRadius: 6)
+                            .fill(Color.white)
+                            .shadow(color: .black.opacity(0.15), radius: 1.5, y: 0.5)
+                    )
+                    .padding(.trailing, 8)
+                    .offset(y: -5)
+            }
+        }
+        .frame(height: 40)
+        .background(headerColor)
+    }
+
+    // MARK: - Content
 
     @ViewBuilder
     private var contentView: some View {
         switch item.itemType {
-        case .text:  textContentView
+        case .text:
+            switch kind {
+            case .color: colorContentView
+            case .link:  linkContentView
+            default:     textContentView
+            }
         case .image: imageContentView
         case .file:
             if item.isImageFile, let path = item.filePathsArray?.first {
@@ -168,28 +211,48 @@ struct ClipboardCardView: View {
     }
 
     private var textContentView: some View {
-        Group {
-            if let nsColor = ColorCodeHelper.color(from: item.plainText ?? "") {
-                Text(item.displayText)
-                    .font(.system(size: 12, weight: .medium))
-                    .lineLimit(2)
-                    .multilineTextAlignment(.center)
-                    .foregroundColor(Color(nsColor: ColorCodeHelper.contrastingTextColor(for: nsColor)))
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .padding(8)
-                    .background(Color(nsColor: nsColor))
-            } else {
-                VStack(alignment: .leading, spacing: 4) {
-                    Text(item.displayText)
-                        .font(.system(size: 11))
-                        .lineLimit(4)
-                        .foregroundColor(.primary)
-                        .frame(maxWidth: .infinity, alignment: .leading)
-                    Spacer()
-                }
-                .padding(8)
-            }
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.displayText)
+                .font(.system(size: 11.5))
+                .lineLimit(5)
+                .foregroundColor(.primary)
+                .multilineTextAlignment(.leading)
+                .frame(maxWidth: .infinity, alignment: .leading)
+            Spacer(minLength: 0)
         }
+        .padding(.horizontal, 10)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+
+    private var linkContentView: some View {
+        VStack(alignment: .leading, spacing: 3) {
+            Text(CardKind.displayURL(item.plainText ?? ""))
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundColor(.primary)
+                .lineLimit(2)
+                .multilineTextAlignment(.leading)
+            Text(CardKind.displayURL(item.plainText ?? ""))
+                .font(.system(size: 10))
+                .foregroundColor(.secondary)
+                .lineLimit(1)
+            Spacer(minLength: 0)
+        }
+        .padding(.horizontal, 10)
+        .padding(.top, 8)
+        .padding(.bottom, 4)
+    }
+
+    private var colorContentView: some View {
+        let raw = item.plainText?.trimmingCharacters(in: .whitespacesAndNewlines) ?? ""
+        let nsColor = ColorCodeHelper.color(from: raw) ?? .clear
+        return ZStack {
+            Color(nsColor: nsColor)
+            Text(raw)
+                .font(.system(size: 13, weight: .medium, design: .monospaced))
+                .foregroundColor(Color(nsColor: ColorCodeHelper.contrastingTextColor(for: nsColor)))
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
 
     private var imageContentView: some View {
@@ -213,94 +276,157 @@ struct ClipboardCardView: View {
 
     private var fileContentView: some View {
         VStack(spacing: 6) {
+            Spacer(minLength: 0)
             if let icon = item.fileIcon {
                 Image(nsImage: icon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 36, height: 36)
+                    .frame(width: 44, height: 44)
             } else {
                 Image(systemName: "doc")
-                    .font(.system(size: 28))
+                    .font(.system(size: 32))
                     .foregroundColor(.secondary)
             }
-
             if let paths = item.filePathsArray, let firstPath = paths.first {
-                let fileName = URL(fileURLWithPath: firstPath).lastPathComponent
-                let fileExt = URL(fileURLWithPath: firstPath).pathExtension.uppercased()
-
-                Text(fileName)
+                Text(URL(fileURLWithPath: firstPath).lastPathComponent)
                     .font(.system(size: 10))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .foregroundColor(.primary)
-
-                if !fileExt.isEmpty {
-                    HStack(spacing: 2) {
-                        Image(systemName: "tag")
-                            .font(.system(size: 8))
-                        Text(".\(fileExt)")
-                            .font(.system(size: 9, weight: .medium))
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 2)
-                    .background(Color.orange.opacity(0.2))
-                    .foregroundColor(.orange)
-                    .clipShape(RoundedRectangle(cornerRadius: 3))
-                }
             }
+            Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .padding(8)
     }
 
-    // MARK: - Bottom Bar
+    // MARK: - Footer
 
-    private var bottomBar: some View {
-        HStack(spacing: 4) {
-            if let appIcon = item.sourceAppIcon {
-                Image(nsImage: appIcon)
-                    .resizable()
-                    .frame(width: 14, height: 14)
-            } else {
-                Image(systemName: item.itemType.iconName)
-                    .font(.system(size: 10))
-                    .foregroundColor(.secondary)
+    private var footerView: some View {
+        Text(footerText)
+            .font(.system(size: 10))
+            .foregroundColor(.secondary)
+            .lineLimit(1)
+            .frame(maxWidth: .infinity)
+            .padding(.vertical, 5)
+            .background(Color(nsColor: .textBackgroundColor))
+            .overlay(alignment: .top) {
+                Rectangle()
+                    .fill(Color(nsColor: .separatorColor).opacity(0.5))
+                    .frame(height: 0.5)
             }
+    }
 
-            Spacer()
-
-            extraInfoView
-
-            Text(item.formattedTime)
-                .font(.system(size: 9))
-                .foregroundColor(Color(nsColor: .tertiaryLabelColor))
+    private var footerText: String {
+        switch item.itemType {
+        case .text:
+            let count = item.characterCount ?? 0
+            return String(format: String(localized: "mainpanel.text.characterCountFormat"), count)
+        case .image:
+            return item.imageSizeInfo ?? ""
+        case .file:
+            if let paths = item.filePathsArray, let first = paths.first {
+                if paths.count > 1 {
+                    return String(format: String(localized: "mainpanel.file.fileCountFormat"), paths.count)
+                }
+                return first
+            }
+            return ""
         }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 6)
+    }
+
+    // MARK: - Context Menu
+
+    @ViewBuilder
+    private var contextMenuContent: some View {
+        Button { onPaste(AppSettings.pastePlainTextByDefault) } label: {
+            Label(String(localized: "mainpanel.context.paste"), systemImage: "doc.on.clipboard")
+        }
+        Button { onPaste(true) } label: {
+            Label(String(localized: "mainpanel.context.pastePlainText"), systemImage: "text.alignleft")
+        }
+        Button { onCopy?() } label: {
+            Label(String(localized: "mainpanel.context.copy"), systemImage: "doc.on.doc")
+        }
+        Divider()
+        if item.itemType == .text {
+            Button { onEdit?() } label: {
+                Label(String(localized: "mainpanel.edit.title"), systemImage: "pencil")
+            }
+            Button { onRename?() } label: {
+                Label(String(localized: "mainpanel.rename.title"), systemImage: "character.cursor.ibeam")
+            }
+        }
+        Button { onQuickLook?() } label: {
+            Label(String(localized: "mainpanel.context.quickLook"), systemImage: "eye")
+        }
+        if item.itemType == .file || kind == .link {
+            Button { onOpen?() } label: {
+                Label(String(localized: "mainpanel.context.open"), systemImage: "arrow.up.forward.app")
+            }
+        }
+        Menu {
+            ForEach(0..<pinboardCount, id: \.self) { index in
+                Button {
+                    onMoveToPinboard(index)
+                } label: {
+                    Label(AppSettings.pinboardName(at: index), systemImage: "circle.fill")
+                        .tint(AppSettings.pinboardColor(at: index))
+                }
+            }
+            Divider()
+            Button { onNewPinboard?() } label: {
+                Label(String(localized: "mainpanel.context.createPinboard"), systemImage: "plus")
+            }
+        } label: {
+            Label(String(localized: "mainpanel.context.pin"), systemImage: "pin")
+        }
+        Menu {
+            shareButtons
+        } label: {
+            Label(String(localized: "mainpanel.context.share"), systemImage: "square.and.arrow.up")
+        }
+        if isPasteStackMode {
+            Button { onRemoveFromPasteStack() } label: {
+                Label(String(localized: "mainpanel.context.removeFromPasteStack"), systemImage: "rectangle.stack.badge.minus")
+            }
+        } else {
+            Button { onAddToPasteStack() } label: {
+                Label(String(localized: "mainpanel.context.addToPasteStack"), systemImage: "rectangle.stack.badge.plus")
+            }
+        }
+        Divider()
+        Button(role: .destructive) { onDelete() } label: {
+            Label(String(localized: "mainpanel.context.delete"), systemImage: "trash")
+        }
     }
 
     @ViewBuilder
-    private var extraInfoView: some View {
-        switch item.itemType {
-        case .text:
-            if let count = item.characterCount {
-                Text(String(format: String(localized: "mainpanel.text.characterCountFormat"), count))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-            }
-        case .image:
-            if let sizeInfo = item.imageSizeInfo {
-                Text(sizeInfo)
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
-            }
-        case .file:
-            if let count = item.fileCount, count > 1 {
-                Text(String(format: String(localized: "mainpanel.file.fileCountFormat"), count))
-                    .font(.system(size: 9))
-                    .foregroundColor(.secondary)
+    private var shareButtons: some View {
+        let payload = sharePayload
+        if payload.isEmpty {
+            Text("mainpanel.context.shareUnavailable")
+        } else {
+            ForEach(NSSharingService.sharingServices(forItems: payload), id: \.title) { service in
+                Button {
+                    service.perform(withItems: payload)
+                } label: {
+                    Label(service.title, systemImage: "square.and.arrow.up")
+                }
             }
         }
+    }
+
+    private var sharePayload: [Any] {
+        switch item.itemType {
+        case .text:
+            if let text = item.plainText { return [text] }
+        case .image:
+            if let data = item.imageData, let image = NSImage(data: data) { return [image] }
+        case .file:
+            return (item.filePathsArray ?? []).map { URL(fileURLWithPath: $0) as Any }
+        }
+        return []
     }
 }
 

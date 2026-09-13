@@ -108,6 +108,13 @@ final class PanelCoordinator {
             self?.updatePreviewWindow()
         })
 
+        observers.append(nc.addObserver(forName: AppNotification.requestTogglePreview, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in
+                guard let self else { return }
+                if self.viewModel?.isPreviewVisible == true { self.hidePreviewWindow() } else { self.showPreviewWindow() }
+            }
+        })
+
         observers.append(nc.addObserver(forName: AppNotification.clipboardItemDragBegan, object: nil, queue: .main) { [weak self] note in
             if let item = note.object as? ClipboardItemModel {
                 self?.startDragGhost(item: item)

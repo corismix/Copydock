@@ -63,7 +63,7 @@ enum PolicyDocuments {
 生效日期：2026-01-26
 应用名称：Paste
 开发者/运营方：Gxlself（以下简称“我们”）
-联系邮箱：gxlself@gmail.com
+联系邮箱：corismix@gmail.com
 
 1. 我们收集哪些信息
 为实现产品功能并保障稳定性，我们可能收集与处理以下信息：
@@ -99,7 +99,7 @@ enum PolicyDocuments {
 - 删除数据：在应用内清理剪贴板历史/相关记录（如提供该功能）。
 - 关闭云同步：在应用设置中关闭同步以停止云端同步处理。
 - 撤回系统权限：在 macOS 系统设置中撤销剪贴板/相关权限（撤回后部分功能可能不可用）。
-- 联系我们：通过 gxlself@gmail.com 提出隐私相关问题与请求。
+- 联系我们：通过 corismix@gmail.com 提出隐私相关问题与请求。
 
 7. 儿童隐私
 Paste 不面向未成年人提供服务。若我们发现不当收集相关信息，将尽快删除。
@@ -117,7 +117,7 @@ Paste 不面向未成年人提供服务。若我们发现不当收集相关信�
 生效日期：2026-01-26
 应用名称：Paste
 开发者/运营方：Gxlself
-联系邮箱：gxlself@gmail.com
+联系邮箱：corismix@gmail.com
 
 1. 接受条款
 你下载、安装、访问或使用 Paste，即表示你已阅读并同意本使用条款及《隐私政策》。如不同意，请停止使用并卸载。
@@ -160,7 +160,7 @@ Paste 及其相关内容（包括但不限于代码、界面、图标、商标�
 本条款适用中华人民共和国法律（不含冲突法规则）。因本条款产生的争议，双方应友好协商；协商不成，提交我们所在地有管辖权的人民法院解决。
 
 11. 联系我们
-如有任何问题，请联系：gxlself@gmail.com
+如有任何问题，请联系：corismix@gmail.com
 """#
 
     // MARK: - en
@@ -171,7 +171,7 @@ Privacy Policy
 Effective Date: 2026-01-26
 App Name: Paste
 Developer/Operator: Gxlself ("we", "us")
-Contact Email: gxlself@gmail.com
+Contact Email: corismix@gmail.com
 
 1. Information We Collect
 To provide and improve the app, we may collect and process:
@@ -207,7 +207,7 @@ You can:
 - Delete data: clear clipboard history/records in the app (if available).
 - Disable Cloud Sync: turn off sync in settings to stop cloud synchronization.
 - Revoke system permissions: revoke clipboard-related permissions in macOS settings (some features may stop working).
-- Contact us: email gxlself@gmail.com for privacy questions and requests.
+- Contact us: email corismix@gmail.com for privacy questions and requests.
 
 7. Children’s Privacy
 Paste is not intended for children. If we become aware we collected information improperly, we will delete it promptly.
@@ -225,7 +225,7 @@ Terms of Use
 Effective Date: 2026-01-26
 App Name: Paste
 Developer/Operator: Gxlself
-Contact Email: gxlself@gmail.com
+Contact Email: corismix@gmail.com
 
 1. Acceptance of Terms
 By downloading, installing, accessing, or using Paste, you agree to these Terms of Use and the Privacy Policy. If you do not agree, please stop using and uninstall the app.
@@ -268,7 +268,7 @@ We may update, modify, or discontinue parts of the app for operational or compli
 These terms are governed by the laws of the People’s Republic of China (excluding conflict-of-law rules). Disputes should be resolved through friendly negotiation; if negotiation fails, disputes will be submitted to the court with jurisdiction where we are located.
 
 11. Contact
-If you have questions, contact: gxlself@gmail.com
+If you have questions, contact: corismix@gmail.com
 """#
 }
 

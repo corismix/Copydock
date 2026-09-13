@@ -12,7 +12,7 @@ import StoreKit
 struct AboutView: View {
     
     private let developerName = "Gxlself"
-    private let supportEmail = "gxlself@gmail.com"
+    private let supportEmail = "corismix@gmail.com"
     
     var body: some View {
         VStack(spacing: 0) {
@@ -130,7 +130,7 @@ struct AboutView: View {
     private var appName: String {
         (Bundle.main.object(forInfoDictionaryKey: "CFBundleDisplayName") as? String)
         ?? (Bundle.main.object(forInfoDictionaryKey: "CFBundleName") as? String)
-        ?? String(localized: "about.appName", defaultValue: "Paste")
+        ?? String(localized: "about.appName", defaultValue: "Stash")
     }
     
     private var versionText: String {

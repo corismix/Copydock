@@ -63,10 +63,10 @@
 "preferences.databaseSize.unknown" = "Unbekannt";
 "preferences.databaseSize.zero" = "0 KB";
 
-"about.appName" = "Paste";
+"about.appName" = "Stash";
 "about.versionFormat" = "Version %@";
 "about.tagline" = "Ein einfacher und effizienter macOS-Zwischenablage-Manager";
-"about.copyrightFormat" = "© %d Paste";
+"about.copyrightFormat" = "© %d Stash";
 "about.window.title" = "About";
 "about.developedByFormat" = "Developed by %@";
 "about.privacyPolicy" = "Privacy Policy";
@@ -124,7 +124,7 @@
 "preferences.general.retention.year" = "Year";
 "preferences.general.retention.unlimited" = "Unlimited";
 
-"preferences.shortcuts.activatePaste" = "Activate Paste";
+"preferences.shortcuts.activatePaste" = "Activate Stash";
 "preferences.shortcuts.activatePasteStack" = "Activate Paste Stack";
 "preferences.shortcuts.nextPinboard" = "Next Pinboard";
 "preferences.shortcuts.prevPinboard" = "Previous Pinboard";
@@ -152,8 +152,8 @@
 
 "status.menu.purchase" = "Purchase Premium";
 
-"purchase.window.title" = "Purchase Paste Premium";
-"purchase.title" = "Upgrade to Paste Premium";
+"purchase.window.title" = "Purchase Stash Premium";
+"purchase.title" = "Upgrade to Stash Premium";
 "purchase.subtitle" = "Unlock all premium features";
 "purchase.feature.iCloudSync" = "iCloud Sync";
 "purchase.feature.unlimitedHistory" = "Unlimited History";
@@ -193,7 +193,7 @@
 
 "about.rateApp" = "Rate on App Store";
 "about.contactSupport" = "Contact Support";
-"about.supportEmail.subject" = "Paste Support Request";
+"about.supportEmail.subject" = "Stash Support Request";
 "about.supportEmail.body" = "Please describe your issue or suggestion:\n\n";
 
 

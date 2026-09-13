@@ -841,6 +841,14 @@ class ClipboardViewModel: ObservableObject {
 
     var canUndo: Bool { lastDeletedItem != nil }
 
+    /// Opens the given item (URL or file), selecting it first so state stays consistent.
+    func openItem(_ item: ClipboardItemModel) {
+        if let idx = effectiveDisplayItems.firstIndex(where: { $0.id == item.id }) {
+            selectedIndex = idx
+        }
+        openSelectedItem()
+    }
+
     func openSelectedItem() {
         guard let display = selectedDisplayItem else { return }
         switch display {

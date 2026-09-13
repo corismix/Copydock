@@ -12,9 +12,9 @@ enum Constants {
     
     // MARK: - App Info
     
-    static let appName = "Paste"
+    static let appName = "Stash"
     static let bundleIdentifier = Bundle.main.bundleIdentifier ?? "com.pastetool"
-    static let iCloudContainerIdentifier = "iCloud.gxlself.paste-tool"
+    static let iCloudContainerIdentifier = "iCloud.dev.corismix.stash"
     
     // MARK: - Clipboard
     
@@ -71,7 +71,7 @@ enum Constants {
 
 enum PanelLayout {
     /// Fixed height for horizontal panels (bottom/top).
-    static let panelBarHeight: CGFloat = 240
+    static let panelBarHeight: CGFloat = 280
     /// Fixed width for vertical panels (left/right).
     static let panelVerticalWidth: CGFloat = 360
     /// Top bar height for horizontal layout.
@@ -85,15 +85,16 @@ enum PanelLayout {
     /// Vertical padding inside the panel (top and bottom).
     static let vertPadding: CGFloat = 12
     /// Fixed card height in horizontal layout.
-    static let cardHeightH: CGFloat = 160
+    static let cardHeightH: CGFloat = 204
 
     /// Computes card size based on panel position and screen dimensions, filling exactly 9 cards across the visible area.
     static func cardSize(position: AppSettings.PanelPosition, screenSize: CGSize) -> CGSize {
         switch position {
         case .bottom, .top:
-            // Divide screen width into 9 columns, subtracting left/right padding and 8 gaps.
-            let w = (screenSize.width - 2 * panelPadding - 8 * cardSpacing) / 9
-            return CGSize(width: max(80, w), height: cardHeightH)
+            // About five and a half cards visible across the width, like Paste.
+            let visible: CGFloat = 5.4
+            let w = (screenSize.width - 2 * panelPadding - (visible - 1) * cardSpacing) / visible
+            return CGSize(width: max(180, w), height: cardHeightH)
         case .left, .right:
             // Vertical card width fills the panel width minus left/right padding.
             let w = panelVerticalWidth - 2 * panelPadding // 320

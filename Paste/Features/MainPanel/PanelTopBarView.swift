@@ -1,8 +1,10 @@
 //
 //  PanelTopBarView.swift
-//  Paste
+//  Stash
 //
-//  Top bar views for the clipboard panel — horizontal layout (top/bottom) and vertical layout (left/right).
+//  Toolbar for the main panel, styled after Paste for macOS:
+//  search field on the left, then the current list ("Clipboard") menu,
+//  pinboard chips with color dots, an add (+) menu, and an actions (⋯) menu.
 //
 
 import SwiftUI
@@ -15,46 +17,24 @@ struct PanelTopBarView: View {
     @FocusState private var searchFieldFocused: Bool
 
     var body: some View {
-        HStack(spacing: 16) {
+        HStack(spacing: 10) {
+            SearchFieldView(viewModel: viewModel, searchFieldFocused: $searchFieldFocused)
+
+            ListMenuButton(viewModel: viewModel)
+
+            PinboardChipsView(viewModel: viewModel)
+
+            AddMenuButton(viewModel: viewModel)
+
             if viewModel.panelMode == .pasteStack {
-                HStack(spacing: 6) {
-                    Text("mainpanel.pasteStack.title")
-                        .font(.system(size: 11, weight: .semibold))
-                    Button {
-                        viewModel.exitPasteStack()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("accessibility.mainpanel.pasteStackExit"))
+                ModeChip(title: String(localized: "mainpanel.pasteStack.title"),
+                         icon: "rectangle.stack.fill",
+                         tint: .accentColor) {
+                    viewModel.exitPasteStack()
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
             }
 
-            if let idx = viewModel.activePinboardIndex {
-                HStack(spacing: 6) {
-                    Text(String(format: String(localized: "mainpanel.pinboard.titleFormat"), idx + 1))
-                        .font(.system(size: 11, weight: .semibold))
-                    Button {
-                        viewModel.exitPinboard()
-                    } label: {
-                        Image(systemName: "xmark.circle.fill")
-                            .font(.system(size: 12))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("accessibility.mainpanel.pinboardExit"))
-                }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color.accentColor.opacity(0.15))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
+            Spacer(minLength: 0)
 
             // Paste-target app indicator.
             if !viewModel.pasteTargetAppName.isEmpty {
@@ -68,447 +48,349 @@ struct PanelTopBarView: View {
                         .font(.system(size: 11, weight: .medium))
                         .foregroundColor(.secondary)
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 4)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
                 .accessibilityLabel(String(format: String(localized: "accessibility.mainpanel.pasteTarget"), viewModel.pasteTargetAppName))
             }
 
-            // Search field.
-            HStack(spacing: 8) {
-                Image(systemName: "magnifyingglass")
-                    .foregroundColor(.secondary)
-                    .font(.system(size: 12))
-
-                TextField("mainpanel.search.placeholder", text: $viewModel.searchText)
-                    .textFieldStyle(.plain)
-                    .font(.system(size: 13))
-                    .focused($searchFieldFocused)
-                    .onChange(of: searchFieldFocused) { _, new in viewModel.focusSearch = new }
-                    .onChange(of: viewModel.focusSearch) { _, new in if searchFieldFocused != new { searchFieldFocused = new } }
-                    .accessibilityLabel(Text("accessibility.mainpanel.search"))
-                    .accessibilityHint(Text("accessibility.mainpanel.search.hint"))
-
-                if !viewModel.searchText.isEmpty {
-                    Button(action: { viewModel.searchText = "" }) {
-                        Image(systemName: "xmark.circle.fill")
-                            .foregroundColor(.secondary)
-                            .font(.system(size: 11))
-                    }
-                    .buttonStyle(.plain)
-                    .accessibilityLabel(Text("accessibility.mainpanel.clearAll"))
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 6))
-            .frame(width: 200)
-
-            Spacer()
-
-            // Type filter buttons.
-            HStack(spacing: 8) {
-                FilterButton(title: "mainpanel.filter.all", titleKeyForAccessibility: "mainpanel.filter.all", icon: "square.grid.2x2", isSelected: viewModel.selectedType == nil && !viewModel.isRegexPresetMode && viewModel.activePinboardIndex == nil, customTitle: AppSettings.filterTabName(for: nil)) {
-                    viewModel.selectedType = nil
-                    viewModel.isRegexPresetMode = false
-                    viewModel.exitPinboard()
-                }
-                FilterButton(title: "mainpanel.filter.text", titleKeyForAccessibility: "mainpanel.filter.text", icon: "doc.text", isSelected: viewModel.selectedType == .text, customTitle: AppSettings.filterTabName(for: .text)) {
-                    viewModel.selectedType = .text
-                    viewModel.exitPinboard()
-                }
-                FilterButton(title: "mainpanel.filter.image", titleKeyForAccessibility: "mainpanel.filter.image", icon: "photo", isSelected: viewModel.selectedType == .image, customTitle: AppSettings.filterTabName(for: .image)) {
-                    viewModel.selectedType = .image
-                    viewModel.exitPinboard()
-                }
-                FilterButton(title: "mainpanel.filter.file", titleKeyForAccessibility: "mainpanel.filter.file", icon: "folder", isSelected: viewModel.selectedType == .file, customTitle: AppSettings.filterTabName(for: .file)) {
-                    viewModel.selectedType = .file
-                    viewModel.exitPinboard()
-                }
-                FilterButton(title: "mainpanel.filter.regex", titleKeyForAccessibility: "mainpanel.filter.regex", icon: "curlybraces", isSelected: viewModel.isRegexPresetMode) {
-                    viewModel.isRegexPresetMode = true
-                    viewModel.exitPinboard()
-                }
-
-                ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
-                    FilterButton(
-                        title: LocalizedStringKey(AppSettings.pinboardName(at: index)),
-                        titleKeyForAccessibility: AppSettings.pinboardName(at: index),
-                        icon: "pin",
-                        isSelected: viewModel.activePinboardIndex == index
-                    ) {
-                        viewModel.selectedType = nil
-                        viewModel.isRegexPresetMode = false
-                        viewModel.showPinboard(index: index)
-                    }
-                }
-
-                if AppSettings.pinboardCount < AppSettings.pinboardCountMax {
-                    Button {
-                        viewModel.createNewPinboard()
-                    } label: {
-                        Image(systemName: "plus.circle")
-                            .font(.system(size: 14))
-                            .foregroundColor(.secondary)
-                    }
-                    .buttonStyle(.plain)
-                    .help("Add pinboard")
-                }
-
-                // Fixed "About" tab — always last, never removable.
-                AboutFilterButton(isSelected: viewModel.isAboutMode) {
-                    viewModel.isAboutMode = true
-                }
-            }
-
-            Spacer()
-
-            // Item count (hidden in About mode).
             if !viewModel.isAboutMode {
                 Text(String(format: String(localized: "mainpanel.itemCountFormat"), viewModel.effectiveDisplayItems.count))
                     .font(.system(size: 11))
                     .foregroundColor(.secondary)
             }
 
-            // Clear button (hidden in About mode).
-            if !viewModel.isAboutMode {
-                Button(action: { viewModel.clearAll() }) {
-                    Image(systemName: "trash")
-                        .font(.system(size: 12))
-                        .foregroundColor(.secondary)
-                }
-                .buttonStyle(.plain)
-                .help(String(localized: "mainpanel.clearAll.help"))
-                .accessibilityLabel(Text("accessibility.mainpanel.clearAll"))
-                .accessibilityHint(Text("accessibility.mainpanel.clearAll.hint"))
-            }
+            ActionsMenuButton(viewModel: viewModel)
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 10)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 8)
     }
 }
 
-// MARK: - PanelTopBarVerticalView (for left/right panels, 2-row compact layout)
+// MARK: - Search field with filters menu
+
+struct SearchFieldView: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+    var searchFieldFocused: FocusState<Bool>.Binding
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Image(systemName: "magnifyingglass")
+                .foregroundColor(.secondary)
+                .font(.system(size: 12))
+
+            TextField("mainpanel.search.placeholder", text: $viewModel.searchText)
+                .textFieldStyle(.plain)
+                .font(.system(size: 13))
+                .focused(searchFieldFocused)
+                .onChange(of: searchFieldFocused.wrappedValue) { _, new in viewModel.focusSearch = new }
+                .onChange(of: viewModel.focusSearch) { _, new in if searchFieldFocused.wrappedValue != new { searchFieldFocused.wrappedValue = new } }
+                .accessibilityLabel(Text("accessibility.mainpanel.search"))
+                .accessibilityHint(Text("accessibility.mainpanel.search.hint"))
+
+            if !viewModel.searchText.isEmpty {
+                Button(action: { viewModel.searchText = "" }) {
+                    Image(systemName: "xmark.circle.fill")
+                        .foregroundColor(.secondary)
+                        .font(.system(size: 11))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("accessibility.mainpanel.clearAll"))
+            }
+
+            FiltersMenuButton(viewModel: viewModel)
+        }
+        .padding(.horizontal, 10)
+        .padding(.vertical, 6)
+        .background(Color(nsColor: .controlBackgroundColor))
+        .clipShape(RoundedRectangle(cornerRadius: 8))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8)
+                .strokeBorder(Color.black.opacity(0.08), lineWidth: 0.5)
+        )
+        .frame(width: 260)
+    }
+}
+
+// MARK: - Filters menu (type, custom categories, regex presets)
+
+struct FiltersMenuButton: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+
+    private var isFiltering: Bool {
+        viewModel.selectedType != nil || viewModel.isRegexPresetMode || viewModel.selectedCustomTypeId != nil
+    }
+
+    var body: some View {
+        Menu {
+            Button {
+                viewModel.selectedType = nil
+                viewModel.isRegexPresetMode = false
+                viewModel.selectedCustomTypeId = nil
+            } label: {
+                Label(String(localized: "mainpanel.filter.all"), systemImage: "square.grid.2x2")
+            }
+            Button { viewModel.selectedType = .text } label: {
+                Label(String(localized: "mainpanel.filter.text"), systemImage: "doc.text")
+            }
+            Button { viewModel.selectedType = .image } label: {
+                Label(String(localized: "mainpanel.filter.image"), systemImage: "photo")
+            }
+            Button { viewModel.selectedType = .file } label: {
+                Label(String(localized: "mainpanel.filter.file"), systemImage: "folder")
+            }
+            Button { viewModel.isRegexPresetMode = true } label: {
+                Label(String(localized: "mainpanel.filter.regex"), systemImage: "curlybraces")
+            }
+            if !viewModel.customTypes.isEmpty {
+                Divider()
+                ForEach(viewModel.customTypes) { custom in
+                    Button { viewModel.selectedCustomTypeId = custom.id } label: {
+                        Label(custom.name, systemImage: "tag")
+                    }
+                }
+            }
+        } label: {
+            Image(systemName: "line.3.horizontal.decrease")
+                .font(.system(size: 11, weight: .medium))
+                .foregroundColor(isFiltering ? .accentColor : .secondary)
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .frame(width: 18)
+        .accessibilityLabel(Text("accessibility.mainpanel.filters"))
+    }
+}
+
+// MARK: - Current list menu ("Clipboard" + pinboards)
+
+struct ListMenuButton: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+
+    private var currentListName: String {
+        if let idx = viewModel.activePinboardIndex {
+            return AppSettings.pinboardName(at: idx)
+        }
+        return String(localized: "mainpanel.list.clipboard")
+    }
+
+    var body: some View {
+        Menu {
+            Button {
+                viewModel.exitPinboard()
+                viewModel.isAboutMode = false
+            } label: {
+                Label(String(localized: "mainpanel.list.clipboardHistory"), systemImage: "clock")
+            }
+            if AppSettings.pinboardCount > 0 {
+                Divider()
+                ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
+                    Button {
+                        viewModel.selectedType = nil
+                        viewModel.isRegexPresetMode = false
+                        viewModel.isAboutMode = false
+                        viewModel.showPinboard(index: index)
+                    } label: {
+                        Label(AppSettings.pinboardName(at: index), systemImage: "circle.fill")
+                            .tint(AppSettings.pinboardColor(at: index))
+                    }
+                }
+            }
+            Divider()
+            Button { viewModel.createNewPinboard() } label: {
+                Label(String(localized: "mainpanel.context.createPinboard"), systemImage: "plus")
+            }
+        } label: {
+            HStack(spacing: 5) {
+                if let idx = viewModel.activePinboardIndex {
+                    Circle()
+                        .fill(AppSettings.pinboardColor(at: idx))
+                        .frame(width: 8, height: 8)
+                } else {
+                    Image(systemName: "clock")
+                        .font(.system(size: 11, weight: .medium))
+                }
+                Text(currentListName)
+                    .font(.system(size: 12, weight: .medium))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .bold))
+                    .foregroundColor(.secondary)
+            }
+            .padding(.horizontal, 10)
+            .padding(.vertical, 6)
+            .background(Color(nsColor: .controlBackgroundColor))
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+    }
+}
+
+// MARK: - Pinboard chips
+
+struct PinboardChipsView: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+
+    var body: some View {
+        HStack(spacing: 4) {
+            ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
+                Button {
+                    if viewModel.activePinboardIndex == index {
+                        viewModel.exitPinboard()
+                    } else {
+                        viewModel.selectedType = nil
+                        viewModel.isRegexPresetMode = false
+                        viewModel.isAboutMode = false
+                        viewModel.showPinboard(index: index)
+                    }
+                } label: {
+                    HStack(spacing: 5) {
+                        Circle()
+                            .fill(AppSettings.pinboardColor(at: index))
+                            .frame(width: 8, height: 8)
+                        Text(AppSettings.pinboardName(at: index))
+                            .font(.system(size: 11, weight: .medium))
+                            .lineLimit(1)
+                    }
+                    .padding(.horizontal, 8)
+                    .padding(.vertical, 5)
+                    .background(viewModel.activePinboardIndex == index
+                                ? AppSettings.pinboardColor(at: index).opacity(0.18)
+                                : Color.clear)
+                    .clipShape(RoundedRectangle(cornerRadius: 7))
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text(AppSettings.pinboardName(at: index)))
+            }
+        }
+    }
+}
+
+// MARK: - Add (+) menu
+
+struct AddMenuButton: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+
+    var body: some View {
+        Menu {
+            Button { viewModel.showNewItemSheet = true } label: {
+                Label(String(localized: "mainpanel.newItem.title"), systemImage: "doc.text")
+            }
+            Button { viewModel.createNewPinboard() } label: {
+                Label(String(localized: "mainpanel.context.createPinboard"), systemImage: "pin")
+            }
+        } label: {
+            Image(systemName: "plus")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: 26, height: 26)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .accessibilityLabel(Text("accessibility.mainpanel.add"))
+    }
+}
+
+// MARK: - Actions (⋯) menu
+
+struct ActionsMenuButton: View {
+    @ObservedObject var viewModel: ClipboardViewModel
+
+    var body: some View {
+        Menu {
+            Button {
+                NotificationCenter.default.post(name: AppNotification.requestTogglePause, object: nil)
+            } label: {
+                Label(String(localized: "status.menu.pause"), systemImage: "pause.circle")
+            }
+            Divider()
+            Button {
+                NotificationCenter.default.post(name: AppNotification.requestShowPreferences, object: nil)
+            } label: {
+                Label(String(localized: "status.menu.preferences"), systemImage: "gear")
+            }
+            Button { viewModel.isAboutMode = true } label: {
+                Label(String(localized: "status.menu.about"), systemImage: "info.circle")
+            }
+            Divider()
+            Button(role: .destructive) { viewModel.clearAll() } label: {
+                Label(String(localized: "mainpanel.clearAll.help"), systemImage: "trash")
+            }
+            Divider()
+            Button {
+                NotificationCenter.default.post(name: AppNotification.requestQuit, object: nil)
+            } label: {
+                Label(String(localized: "status.menu.quit"), systemImage: "power")
+            }
+        } label: {
+            Image(systemName: "ellipsis")
+                .font(.system(size: 13, weight: .medium))
+                .foregroundColor(.secondary)
+                .frame(width: 26, height: 26)
+                .contentShape(Rectangle())
+        }
+        .menuStyle(.borderlessButton)
+        .menuIndicator(.hidden)
+        .accessibilityLabel(Text("accessibility.mainpanel.actions"))
+    }
+}
+
+// MARK: - Mode chip (Paste Stack indicator)
+
+struct ModeChip: View {
+    let title: String
+    let icon: String
+    let tint: Color
+    let onClose: () -> Void
+
+    var body: some View {
+        HStack(spacing: 5) {
+            Image(systemName: icon)
+                .font(.system(size: 10, weight: .semibold))
+            Text(title)
+                .font(.system(size: 11, weight: .semibold))
+            Button(action: onClose) {
+                Image(systemName: "xmark.circle.fill")
+                    .font(.system(size: 11))
+                    .foregroundColor(.secondary)
+            }
+            .buttonStyle(.plain)
+        }
+        .foregroundColor(tint)
+        .padding(.horizontal, 8)
+        .padding(.vertical, 4)
+        .background(tint.opacity(0.15))
+        .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+}
+
+// MARK: - PanelTopBarVerticalView (for left/right panels, compact 2-row layout)
 
 struct PanelTopBarVerticalView: View {
     @ObservedObject var viewModel: ClipboardViewModel
     @FocusState private var searchFieldFocused: Bool
 
     var body: some View {
-        VStack(spacing: 0) {
-            // Row 1: search field + status indicators.
+        VStack(spacing: 6) {
             HStack(spacing: 8) {
-                // Mode badge (pasteStack / pinboard).
+                SearchFieldView(viewModel: viewModel, searchFieldFocused: $searchFieldFocused)
+                    .frame(maxWidth: .infinity)
+                AddMenuButton(viewModel: viewModel)
+                ActionsMenuButton(viewModel: viewModel)
+            }
+
+            HStack(spacing: 6) {
+                ListMenuButton(viewModel: viewModel)
+                PinboardChipsView(viewModel: viewModel)
                 if viewModel.panelMode == .pasteStack {
-                    HStack(spacing: 4) {
-                        Text("mainpanel.pasteStack.title")
-                            .font(.system(size: 10, weight: .semibold))
-                        Button {
-                            viewModel.exitPasteStack()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(Text("accessibility.mainpanel.pasteStackExit"))
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                }
-
-                if let idx = viewModel.activePinboardIndex {
-                    HStack(spacing: 4) {
-                        Text(String(format: String(localized: "mainpanel.pinboard.titleFormat"), idx + 1))
-                            .font(.system(size: 10, weight: .semibold))
-                        Button {
-                            viewModel.exitPinboard()
-                        } label: {
-                            Image(systemName: "xmark.circle.fill")
-                                .font(.system(size: 10))
-                                .foregroundColor(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .accessibilityLabel(Text("accessibility.mainpanel.pinboardExit"))
-                    }
-                    .padding(.horizontal, 6)
-                    .padding(.vertical, 3)
-                    .background(Color.accentColor.opacity(0.15))
-                    .clipShape(RoundedRectangle(cornerRadius: 5))
-                }
-
-                // Search field.
-                HStack(spacing: 6) {
-                    Image(systemName: "magnifyingglass")
-                        .foregroundColor(.secondary)
-                        .font(.system(size: 11))
-                    TextField("mainpanel.search.placeholder", text: $viewModel.searchText)
-                        .textFieldStyle(.plain)
-                        .font(.system(size: 12))
-                        .focused($searchFieldFocused)
-                        .onChange(of: searchFieldFocused) { _, new in viewModel.focusSearch = new }
-                        .onChange(of: viewModel.focusSearch) { _, new in if searchFieldFocused != new { searchFieldFocused = new } }
-                        .accessibilityLabel(Text("accessibility.mainpanel.search"))
-                    if !viewModel.searchText.isEmpty {
-                        Button(action: { viewModel.searchText = "" }) {
-                            Image(systemName: "xmark.circle.fill")
-                                .foregroundColor(.secondary)
-                                .font(.system(size: 10))
-                        }
-                        .buttonStyle(.plain)
+                    ModeChip(title: String(localized: "mainpanel.pasteStack.title"),
+                             icon: "rectangle.stack.fill",
+                             tint: .accentColor) {
+                        viewModel.exitPasteStack()
                     }
                 }
-                .padding(.horizontal, 8)
-                .padding(.vertical, 5)
-                .background(Color(nsColor: .controlBackgroundColor))
-                .clipShape(RoundedRectangle(cornerRadius: 6))
-            }
-            .padding(.horizontal, PanelLayout.panelPadding)
-            .padding(.top, 8)
-            .padding(.bottom, 4)
-
-            // Row 2: filter buttons + count + clear (scrollable to fit custom types).
-            ScrollView(.horizontal, showsIndicators: false) {
-                HStack(spacing: 6) {
-                    FilterButton(title: "mainpanel.filter.all", titleKeyForAccessibility: "mainpanel.filter.all", icon: "square.grid.2x2", isSelected: viewModel.selectedType == nil && !viewModel.isRegexPresetMode && viewModel.activePinboardIndex == nil, customTitle: AppSettings.filterTabName(for: nil)) {
-                        viewModel.selectedType = nil
-                        viewModel.isRegexPresetMode = false
-                        viewModel.exitPinboard()
-                    }
-                    FilterButton(title: "mainpanel.filter.text", titleKeyForAccessibility: "mainpanel.filter.text", icon: "doc.text", isSelected: viewModel.selectedType == .text, customTitle: AppSettings.filterTabName(for: .text)) {
-                        viewModel.selectedType = .text
-                        viewModel.exitPinboard()
-                    }
-                    FilterButton(title: "mainpanel.filter.image", titleKeyForAccessibility: "mainpanel.filter.image", icon: "photo", isSelected: viewModel.selectedType == .image, customTitle: AppSettings.filterTabName(for: .image)) {
-                        viewModel.selectedType = .image
-                        viewModel.exitPinboard()
-                    }
-                    FilterButton(title: "mainpanel.filter.file", titleKeyForAccessibility: "mainpanel.filter.file", icon: "folder", isSelected: viewModel.selectedType == .file, customTitle: AppSettings.filterTabName(for: .file)) {
-                        viewModel.selectedType = .file
-                        viewModel.exitPinboard()
-                    }
-                    FilterButton(title: "mainpanel.filter.regex", titleKeyForAccessibility: "mainpanel.filter.regex", icon: "curlybraces", isSelected: viewModel.isRegexPresetMode) {
-                        viewModel.isRegexPresetMode = true
-                        viewModel.exitPinboard()
-                    }
-
-                    ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
-                        FilterButton(
-                            title: LocalizedStringKey(AppSettings.pinboardName(at: index)),
-                            titleKeyForAccessibility: AppSettings.pinboardName(at: index),
-                            icon: "pin",
-                            isSelected: viewModel.activePinboardIndex == index
-                        ) {
-                            viewModel.selectedType = nil
-                            viewModel.isRegexPresetMode = false
-                            viewModel.showPinboard(index: index)
-                        }
-                    }
-
-                    if AppSettings.pinboardCount < AppSettings.pinboardCountMax {
-                        Button {
-                            viewModel.createNewPinboard()
-                        } label: {
-                            Image(systemName: "plus.circle")
-                                .font(.system(size: 13))
-                                .foregroundColor(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                    }
-
-                    // Fixed "About" tab — always last, never removable.
-                    AboutFilterButton(isSelected: viewModel.isAboutMode) {
-                        viewModel.isAboutMode = true
-                    }
-
-                    Spacer()
-
-                    if !viewModel.isAboutMode {
-                        Text(String(format: String(localized: "mainpanel.itemCountFormat"), viewModel.effectiveDisplayItems.count))
-                            .font(.system(size: 10))
-                            .foregroundColor(.secondary)
-                    }
-
-                    if !viewModel.isAboutMode {
-                        Button(action: { viewModel.clearAll() }) {
-                            Image(systemName: "trash")
-                                .font(.system(size: 11))
-                                .foregroundColor(.secondary)
-                        }
-                        .buttonStyle(.plain)
-                        .help(String(localized: "mainpanel.clearAll.help"))
-                        .accessibilityLabel(Text("accessibility.mainpanel.clearAll"))
-                    }
-                }
-            }
-            .padding(.horizontal, PanelLayout.panelPadding)
-            .padding(.bottom, 8)
-        }
-        .frame(height: PanelLayout.topBarHeightV)
-    }
-}
-
-// MARK: - CustomTypeFilterButton
-
-struct CustomTypeFilterButton: View {
-    let customType: CustomType
-    let isSelected: Bool
-    let onSelect: () -> Void
-    let onRename: (String) -> Void
-    let onDelete: () -> Void
-
-    @State private var showRenameAlert = false
-    @State private var renameText = ""
-
-    var body: some View {
-        Button(action: onSelect) {
-            HStack(spacing: 4) {
-                Image(systemName: "tag")
-                    .font(.system(size: 10))
-                Text(customType.name)
-                    .font(.system(size: 11))
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 9))
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
-            .foregroundColor(isSelected ? .white : .secondary)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-        }
-        .buttonStyle(.plain)
-        .contextMenu {
-            Button {
-                renameText = customType.name
-                showRenameAlert = true
-            } label: {
-                Label("Rename", systemImage: "pencil")
-            }
-            Divider()
-            Button(role: .destructive) {
-                onDelete()
-            } label: {
-                Label("Delete", systemImage: "trash")
+                Spacer(minLength: 0)
             }
         }
-        .alert("Rename Type", isPresented: $showRenameAlert) {
-            TextField("Name", text: $renameText)
-            Button("Rename") { onRename(renameText) }
-            Button("Cancel", role: .cancel) { }
-        }
-    }
-}
-
-// MARK: - CustomTypeInputRow
-
-struct CustomTypeInputRow: View {
-    @Binding var text: String
-    let onConfirm: () -> Void
-    let onCancel: () -> Void
-    @FocusState private var focused: Bool
-
-    var body: some View {
-        HStack(spacing: 4) {
-            TextField("Type name…", text: $text)
-                .textFieldStyle(.plain)
-                .font(.system(size: 11))
-                .frame(width: 90)
-                .focused($focused)
-                .onSubmit { onConfirm() }
-                .onExitCommand { onCancel() }
-            Button(action: onConfirm) {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(.accentColor)
-            }
-            .buttonStyle(.plain)
-            .disabled(text.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
-            Button(action: onCancel) {
-                Image(systemName: "xmark.circle.fill")
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-            }
-            .buttonStyle(.plain)
-        }
-        .padding(.horizontal, 8)
-        .padding(.vertical, 4)
-        .background(Color(nsColor: .controlBackgroundColor))
-        .clipShape(RoundedRectangle(cornerRadius: 6))
-        .onAppear { focused = true }
-    }
-}
-
-// MARK: - AboutFilterButton
-
-/// Fixed "About" tab — always the last filter, cannot be deleted or renamed.
-struct AboutFilterButton: View {
-    let isSelected: Bool
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: "heart.fill")
-                    .font(.system(size: 10))
-                    .foregroundColor(isSelected ? .white : Color(nsColor: .systemPink))
-                Text("关于")
-                    .font(.system(size: 11))
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 9))
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(isSelected ? Color(nsColor: .systemPink) : Color(nsColor: .controlBackgroundColor))
-            .foregroundColor(isSelected ? .white : .secondary)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-        }
-        .buttonStyle(.plain)
-        .help("关于 · About the developer")
-    }
-}
-
-// MARK: - FilterButton
-
-struct FilterButton: View {
-    let title: LocalizedStringKey
-    let titleKeyForAccessibility: String
-    let icon: String
-    let isSelected: Bool
-    var customTitle: String?
-    let action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 4) {
-                Image(systemName: icon)
-                    .font(.system(size: 10))
-                if let custom = customTitle {
-                    Text(custom)
-                        .font(.system(size: 11))
-                } else {
-                    Text(title)
-                        .font(.system(size: 11))
-                }
-                if isSelected {
-                    Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 9))
-                }
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 5)
-            .background(isSelected ? Color.accentColor : Color(nsColor: .controlBackgroundColor))
-            .foregroundColor(isSelected ? .white : .secondary)
-            .clipShape(RoundedRectangle(cornerRadius: 5))
-        }
-        .buttonStyle(.plain)
-        .accessibilityLabel(String(localized: String.LocalizationValue(titleKeyForAccessibility)) + ", " + (isSelected ? String(localized: "accessibility.mainpanel.filter.selected") : String(localized: "accessibility.mainpanel.filter.unselected")))
+        .padding(.horizontal, 12)
+        .padding(.vertical, 8)
     }
 }

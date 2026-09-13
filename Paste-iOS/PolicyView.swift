@@ -62,7 +62,7 @@ enum iOSPolicyContent {
 生效日期：2026-01-26
 应用名称：Paste
 开发者/运营方：Gxlself（以下简称"我们"）
-联系邮箱：gxlself@gmail.com
+联系邮箱：corismix@gmail.com
 
 1. 我们收集哪些信息
 为实现产品功能并保障稳定性，我们可能收集与处理以下信息：
@@ -92,7 +92,7 @@ enum iOSPolicyContent {
 你可以：
 - 删除数据：在应用内清理剪贴板历史。
 - 关闭云同步：在应用设置中关闭同步。
-- 联系我们：通过 gxlself@gmail.com 提出隐私相关问题与请求。
+- 联系我们：通过 corismix@gmail.com 提出隐私相关问题与请求。
 
 6. 儿童隐私
 Paste 不面向未成年人提供服务。
@@ -107,7 +107,7 @@ Paste 不面向未成年人提供服务。
 生效日期：2026-01-26
 应用名称：Paste
 开发者/运营方：Gxlself
-联系邮箱：gxlself@gmail.com
+联系邮箱：corismix@gmail.com
 
 1. 接受条款
 你下载、安装、访问或使用 Paste，即表示你已阅读并同意本使用条款及《隐私政策》。如不同意，请停止使用并卸载。
@@ -126,7 +126,7 @@ Paste 不面向未成年人提供服务。
 Paste 按"现状"提供，我们不保证完全无错误、不间断或满足你的特定需求。
 
 5. 联系我们
-如有任何问题，请联系：gxlself@gmail.com
+如有任何问题，请联系：corismix@gmail.com
 """
 
     static let privacyPolicy_en = """
@@ -135,7 +135,7 @@ Privacy Policy
 Effective Date: 2026-01-26
 App Name: Paste
 Developer/Operator: Gxlself ("we", "us")
-Contact Email: gxlself@gmail.com
+Contact Email: corismix@gmail.com
 
 1. Information We Collect
 To provide and improve the app, we may collect and process:
@@ -159,7 +159,7 @@ Note: Paste does not perform user analytics tracking and does not upload crash/d
 We do not sell your personal information.
 
 5. Your Choices
-You can: delete data in-app, disable Cloud Sync, or contact gxlself@gmail.com.
+You can: delete data in-app, disable Cloud Sync, or contact corismix@gmail.com.
 
 6. Children's Privacy
 Paste is not intended for children.
@@ -174,7 +174,7 @@ Terms of Use
 Effective Date: 2026-01-26
 App Name: Paste
 Developer/Operator: Gxlself
-Contact Email: gxlself@gmail.com
+Contact Email: corismix@gmail.com
 
 1. Acceptance of Terms
 By downloading, installing, or using Paste, you agree to these Terms of Use and the Privacy Policy.
@@ -189,6 +189,6 @@ You agree not to use the app for unlawful purposes, reverse engineer it, or inte
 The app is provided "as is" without warranties.
 
 5. Contact
-If you have questions, contact: gxlself@gmail.com
+If you have questions, contact: corismix@gmail.com
 """
 }

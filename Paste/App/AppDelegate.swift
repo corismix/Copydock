@@ -93,6 +93,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         setupClipboardMonitor()
         hotKeyCoordinator.setup()
         setupModifierFlagsMonitor()
+        setupActionObservers()
         applyAppearance(AppSettings.appearance)
         NSApp.setActivationPolicy(.accessory)
         NSApp.registerForRemoteNotifications()
@@ -185,6 +186,24 @@ class AppDelegate: NSObject, NSApplicationDelegate {
     private func setupClipboardMonitor() {
         clipboardMonitor = ClipboardMonitor.shared
         clipboardMonitor?.startMonitoring()
+    }
+
+    // MARK: - Panel Action Observers
+
+    private func setupActionObservers() {
+        let nc = NotificationCenter.default
+        nc.addObserver(forName: AppNotification.requestTogglePause, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.togglePause() }
+        }
+        nc.addObserver(forName: AppNotification.requestShowPreferences, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.openPreferences() }
+        }
+        nc.addObserver(forName: AppNotification.requestShowAbout, object: nil, queue: .main) { [weak self] _ in
+            Task { @MainActor [weak self] in self?.openAbout() }
+        }
+        nc.addObserver(forName: AppNotification.requestQuit, object: nil, queue: .main) { _ in
+            Task { @MainActor in NSApp.terminate(nil) }
+        }
     }
 
     // MARK: - Modifier Flags Monitor

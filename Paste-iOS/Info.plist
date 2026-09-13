@@ -6,10 +6,10 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
-			<string>gxlself.paste-tool</string>
+			<string>dev.corismix.stash</string>
 			<key>CFBundleURLSchemes</key>
 			<array>
-				<string>pasteg</string>
+				<string>stash</string>
 			</array>
 		</dict>
 	</array>
