@@ -80,27 +80,31 @@ struct ClipboardCardView: View {
             headerView
             contentView
                 .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(nsColor: .textBackgroundColor))
+                .background(Color(red: 0.11, green: 0.11, blue: 0.12))
             footerView
         }
         .frame(width: cardSize.width, height: cardSize.height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
         .background(
             RoundedRectangle(cornerRadius: 12)
-                .fill(Color(nsColor: .textBackgroundColor))
+                .fill(Color(red: 0.11, green: 0.11, blue: 0.12))
         )
         .overlay(
             RoundedRectangle(cornerRadius: 12)
                 .strokeBorder(isSelected ? Color.accentColor : Color.black.opacity(0.08),
                               lineWidth: isSelected ? 2.5 : 0.5)
         )
-        .overlay(alignment: .topLeading) {
-            if isSelected {
-                Image(systemName: "checkmark.circle.fill")
-                    .font(.system(size: 14))
-                    .foregroundStyle(.white)
-                    .shadow(color: .black.opacity(0.3), radius: 1)
-                    .padding(6)
+        .overlay(alignment: .topTrailing) {
+            // Source app icon, large, bleeding off the card's trailing edge
+            // and overlapping the header/body boundary (Paste's signature look).
+            if let appIcon = item.sourceAppIcon {
+                Image(nsImage: appIcon)
+                    .resizable()
+                    .aspectRatio(contentMode: .fit)
+                    .frame(width: 40, height: 40)
+                    .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
+                    .offset(x: 10, y: 22)
+                    .allowsHitTesting(false)
             }
         }
         .shadow(color: .black.opacity(isDragging ? 0.35 : isHovered ? 0.22 : 0.14),
@@ -152,40 +156,22 @@ struct ClipboardCardView: View {
     // MARK: - Header
 
     private var headerView: some View {
-        ZStack(alignment: .topTrailing) {
-            HStack(alignment: .center, spacing: 6) {
-                VStack(alignment: .leading, spacing: 1) {
-                    Text(kind.label)
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundColor(.white)
-                        .lineLimit(1)
-                    Text(item.formattedTime)
-                        .font(.system(size: 10))
-                        .foregroundColor(.white.opacity(0.85))
-                        .lineLimit(1)
-                }
-                .padding(.leading, 12)
-                Spacer(minLength: 0)
+        HStack(alignment: .center, spacing: 6) {
+            VStack(alignment: .leading, spacing: 1) {
+                Text(kind.label)
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundColor(.white)
+                    .lineLimit(1)
+                Text(item.formattedTime)
+                    .font(.system(size: 10.5))
+                    .foregroundColor(.white.opacity(0.85))
+                    .lineLimit(1)
             }
-            .frame(maxWidth: .infinity, maxHeight: .infinity)
-
-            // Source app icon in a white tile, slightly overhanging the header edge.
-            if let appIcon = item.sourceAppIcon {
-                Image(nsImage: appIcon)
-                    .resizable()
-                    .aspectRatio(contentMode: .fit)
-                    .frame(width: 16, height: 16)
-                    .padding(3)
-                    .background(
-                        RoundedRectangle(cornerRadius: 6)
-                            .fill(Color.white)
-                            .shadow(color: .black.opacity(0.15), radius: 1.5, y: 0.5)
-                    )
-                    .padding(.trailing, 8)
-                    .offset(y: -5)
-            }
+            .padding(.leading, 12)
+            Spacer(minLength: 0)
         }
-        .frame(height: 40)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(height: 44)
         .background(headerColor)
     }
 
@@ -215,7 +201,7 @@ struct ClipboardCardView: View {
             Text(item.displayText)
                 .font(.system(size: 11.5))
                 .lineLimit(5)
-                .foregroundColor(.primary)
+                .foregroundColor(Color(white: 0.88))
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
@@ -229,12 +215,12 @@ struct ClipboardCardView: View {
         VStack(alignment: .leading, spacing: 3) {
             Text(CardKind.displayURL(item.plainText ?? ""))
                 .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(.primary)
+                .foregroundColor(Color(white: 0.9))
                 .lineLimit(2)
                 .multilineTextAlignment(.leading)
             Text(CardKind.displayURL(item.plainText ?? ""))
                 .font(.system(size: 10))
-                .foregroundColor(.secondary)
+                .foregroundColor(Color(white: 0.55))
                 .lineLimit(1)
             Spacer(minLength: 0)
         }
@@ -264,7 +250,7 @@ struct ClipboardCardView: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
             } else {
-                Color(nsColor: .controlBackgroundColor)
+                Color(red: 0.16, green: 0.16, blue: 0.17)
                     .overlay(
                         Image(systemName: "photo")
                             .font(.system(size: 24))
@@ -292,7 +278,7 @@ struct ClipboardCardView: View {
                     .font(.system(size: 10))
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
-                    .foregroundColor(.primary)
+                    .foregroundColor(Color(white: 0.85))
             }
             Spacer(minLength: 0)
         }
@@ -305,14 +291,14 @@ struct ClipboardCardView: View {
     private var footerView: some View {
         Text(footerText)
             .font(.system(size: 10))
-            .foregroundColor(.secondary)
+            .foregroundColor(Color(white: 0.55))
             .lineLimit(1)
             .frame(maxWidth: .infinity)
             .padding(.vertical, 5)
-            .background(Color(nsColor: .textBackgroundColor))
+            .background(Color(red: 0.13, green: 0.13, blue: 0.14))
             .overlay(alignment: .top) {
                 Rectangle()
-                    .fill(Color(nsColor: .separatorColor).opacity(0.5))
+                    .fill(Color.white.opacity(0.07))
                     .frame(height: 0.5)
             }
     }
@@ -449,7 +435,7 @@ private struct FileImagePreview: View {
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .clipped()
             } else if didAttemptLoad {
-                Color(nsColor: .controlBackgroundColor)
+                Color(red: 0.16, green: 0.16, blue: 0.17)
                     .overlay(
                         Image(systemName: "photo")
                             .font(.system(size: 24))

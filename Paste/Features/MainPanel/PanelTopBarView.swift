@@ -15,10 +15,29 @@ import AppKit
 struct PanelTopBarView: View {
     @ObservedObject var viewModel: ClipboardViewModel
     @FocusState private var searchFieldFocused: Bool
+    @State private var searchVisible = false
 
     var body: some View {
-        HStack(spacing: 10) {
-            SearchFieldView(viewModel: viewModel, searchFieldFocused: $searchFieldFocused)
+        HStack(spacing: 12) {
+            Spacer(minLength: 0)
+
+            // Search: a bare magnifier like Paste; expands into the field on click.
+            if searchVisible || !viewModel.searchText.isEmpty {
+                SearchFieldView(viewModel: viewModel, searchFieldFocused: $searchFieldFocused)
+            } else {
+                Button {
+                    searchVisible = true
+                    searchFieldFocused = true
+                } label: {
+                    Image(systemName: "magnifyingglass")
+                        .font(.system(size: 14, weight: .medium))
+                        .foregroundColor(.white.opacity(0.85))
+                        .frame(width: 24, height: 24)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(Text("accessibility.mainpanel.search"))
+            }
 
             ListMenuButton(viewModel: viewModel)
 
@@ -35,27 +54,6 @@ struct PanelTopBarView: View {
             }
 
             Spacer(minLength: 0)
-
-            // Paste-target app indicator.
-            if !viewModel.pasteTargetAppName.isEmpty {
-                HStack(spacing: 4) {
-                    if let icon = viewModel.pasteTargetAppIcon {
-                        Image(nsImage: icon)
-                            .resizable()
-                            .frame(width: 14, height: 14)
-                    }
-                    Text(String(format: String(localized: "mainpanel.pasteTarget.format"), viewModel.pasteTargetAppName))
-                        .font(.system(size: 11, weight: .medium))
-                        .foregroundColor(.secondary)
-                }
-                .accessibilityLabel(String(format: String(localized: "accessibility.mainpanel.pasteTarget"), viewModel.pasteTargetAppName))
-            }
-
-            if !viewModel.isAboutMode {
-                Text(String(format: String(localized: "mainpanel.itemCountFormat"), viewModel.effectiveDisplayItems.count))
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
 
             ActionsMenuButton(viewModel: viewModel)
         }
