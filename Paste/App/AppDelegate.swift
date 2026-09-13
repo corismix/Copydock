@@ -357,6 +357,8 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 viewModel.exitPasteStack()
             } else if viewModel.isShowingPinboard {
                 viewModel.exitPinboard()
+            } else if viewModel.isAboutMode {
+                viewModel.isAboutMode = false
             } else {
                 panelCoordinator.hideWithAnimation()
             }
