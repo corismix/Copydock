@@ -64,8 +64,9 @@ struct ClipboardGridView: View {
                             }
                         }
                     }
-                    // Vertical padding is on the content layer; horizontal padding moves to contentMargins for correct viewAligned snapping.
-                    .padding(.vertical, PanelLayout.vertPadding)
+                    // Horizontal padding is on the content layer for correct viewAligned snapping.
+                    .padding(.top, 4)
+                    .padding(.bottom, 24)
                     .scrollTargetLayout()
                 }
                 // Horizontal padding as contentMargins ensures 20pt leading space after each snap.
@@ -116,15 +117,22 @@ struct ClipboardGridView: View {
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 32))
                     .foregroundColor(.secondary)
-                Text(viewModel.searchText.isEmpty
-                     ? String(localized: "mainpanel.empty.noHistory")
-                     : String(localized: "mainpanel.empty.noMatches"))
+                Text(emptyStateText)
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
             }
             Spacer()
         }
         .frame(maxHeight: .infinity)
+    }
+
+    private var emptyStateText: String {
+        if !viewModel.searchText.isEmpty {
+            return String(localized: "mainpanel.empty.noMatches")
+        }
+        return viewModel.activePinboardIndex == nil
+            ? String(localized: "mainpanel.empty.noHistory")
+            : String(localized: "mainpanel.empty.noPinboard")
     }
 }
 
@@ -234,14 +242,21 @@ struct ClipboardGridVerticalView: View {
                 Image(systemName: "doc.on.clipboard")
                     .font(.system(size: 32))
                     .foregroundColor(.secondary)
-                Text(viewModel.searchText.isEmpty
-                     ? String(localized: "mainpanel.empty.noHistory")
-                     : String(localized: "mainpanel.empty.noMatches"))
+                Text(emptyStateText)
                     .font(.system(size: 13))
                     .foregroundColor(.secondary)
             }
             Spacer()
         }
         .frame(maxHeight: .infinity)
+    }
+
+    private var emptyStateText: String {
+        if !viewModel.searchText.isEmpty {
+            return String(localized: "mainpanel.empty.noMatches")
+        }
+        return viewModel.activePinboardIndex == nil
+            ? String(localized: "mainpanel.empty.noHistory")
+            : String(localized: "mainpanel.empty.noPinboard")
     }
 }

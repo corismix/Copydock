@@ -69,6 +69,7 @@ final class PanelCoordinator {
         panel.backgroundColor = .clear
         panel.isOpaque = false
         panel.hasShadow = true
+        panel.appearance = NSAppearance(named: .darkAqua)
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
         panel.sharingType = AppSettings.showDuringScreenSharing ? .readOnly : .none
 
@@ -304,7 +305,16 @@ final class PanelCoordinator {
             return
         }
         panel.orderFrontRegardless()
-        if previewWindowController == nil { previewWindowController = PreviewWindowController() }
+        if previewWindowController == nil {
+            previewWindowController = PreviewWindowController(
+                clipboardViewModel: viewModel,
+                onClose: { [weak self] in self?.hidePreviewWindow() },
+                onEdit: { [weak self] in
+                    self?.hidePreviewWindow()
+                    self?.viewModel?.showEditSheet = true
+                }
+            )
+        }
         previewWindowController?.showPreview(for: item, preset: preset, selectedIndex: viewModel.selectedIndex, relativeTo: panel)
         viewModel.isPreviewVisible = true
     }

@@ -20,8 +20,9 @@
 "mainpanel.filter.regex" = "Regex";
 "mainpanel.itemCountFormat" = "%d items";
 "mainpanel.clearAll.help" = "Clear all";
-"mainpanel.empty.noHistory" = "Clipboard history is empty";
-"mainpanel.empty.noMatches" = "No matches found";
+"mainpanel.empty.noHistory" = "History is empty";
+"mainpanel.empty.noPinboard" = "Pinboard is empty";
+"mainpanel.empty.noMatches" = "Nothing found";
 "mainpanel.context.paste" = "Paste";
 "mainpanel.context.delete" = "Delete";
 "mainpanel.rename.title" = "Rename";
@@ -261,6 +262,18 @@
 "accessibility.preview.text" = "Text preview";
 "accessibility.preview.image" = "Image preview";
 "accessibility.preview.file" = "File preview";
+"preview.action.close" = "Close";
+"preview.action.pin" = "Pin";
+"preview.action.share" = "Share";
+"preview.action.edit" = "Edit";
+"preview.stats.character" = "%@ character";
+"preview.stats.characters" = "%@ characters";
+"preview.stats.word" = "%@ word";
+"preview.stats.words" = "%@ words";
+"preview.stats.line" = "%@ line";
+"preview.stats.lines" = "%@ lines";
+"preview.stats.file" = "%@ file";
+"preview.stats.files" = "%@ files";
 
 "drag.ghost.releaseHint" = "Release to Paste";
 

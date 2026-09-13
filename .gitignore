@@ -53,3 +53,10 @@ fastlane/test_output
 *.orig
 .cursorrules
 .cursor/
+
+# Parity harness (captures can contain clipboard contents)
+parity/captures/
+parity/harness/.build/
+# Raw dumps extracted from the reference app; regenerate them with the harness.
+parity/reference/extracted/
+parity/reference/disasm/

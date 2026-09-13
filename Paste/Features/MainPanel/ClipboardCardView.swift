@@ -78,10 +78,12 @@ struct ClipboardCardView: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 0) {
             headerView
-            contentView
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
-                .background(Color(red: 0.11, green: 0.11, blue: 0.12))
-            footerView
+            ZStack(alignment: .bottom) {
+                contentView
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                footerView
+            }
+            .background(Color(red: 0.078, green: 0.078, blue: 0.078))
         }
         .frame(width: cardSize.width, height: cardSize.height)
         .clipShape(RoundedRectangle(cornerRadius: 12))
@@ -101,9 +103,9 @@ struct ClipboardCardView: View {
                 Image(nsImage: appIcon)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
-                    .frame(width: 40, height: 40)
-                    .shadow(color: .black.opacity(0.4), radius: 3, y: 1)
-                    .offset(x: 10, y: 22)
+                    .frame(width: 56, height: 56)
+                    .shadow(color: .black.opacity(0.35), radius: 3, y: 1)
+                    .offset(x: 0, y: 0)
                     .allowsHitTesting(false)
             }
         }
@@ -163,15 +165,15 @@ struct ClipboardCardView: View {
                     .foregroundColor(.white)
                     .lineLimit(1)
                 Text(item.formattedTime)
-                    .font(.system(size: 10.5))
+                    .font(.system(size: 11))
                     .foregroundColor(.white.opacity(0.85))
                     .lineLimit(1)
             }
-            .padding(.leading, 12)
+            .padding(.leading, 14)
             Spacer(minLength: 0)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
-        .frame(height: 44)
+        .frame(height: 48)
         .background(headerColor)
     }
 
@@ -199,34 +201,31 @@ struct ClipboardCardView: View {
     private var textContentView: some View {
         VStack(alignment: .leading, spacing: 4) {
             Text(item.displayText)
-                .font(.system(size: 11.5))
+                .font(.system(size: 12))
                 .lineLimit(5)
                 .foregroundColor(Color(white: 0.88))
                 .multilineTextAlignment(.leading)
                 .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
     }
 
     private var linkContentView: some View {
-        VStack(alignment: .leading, spacing: 3) {
-            Text(CardKind.displayURL(item.plainText ?? ""))
-                .font(.system(size: 12, weight: .semibold))
-                .foregroundColor(Color(white: 0.9))
-                .lineLimit(2)
+        VStack(alignment: .leading, spacing: 4) {
+            Text(item.plainText ?? CardKind.displayURL(item.plainText ?? ""))
+                .font(.system(size: 12))
+                .lineLimit(4)
+                .foregroundColor(Color(white: 0.88))
                 .multilineTextAlignment(.leading)
-            Text(CardKind.displayURL(item.plainText ?? ""))
-                .font(.system(size: 10))
-                .foregroundColor(Color(white: 0.55))
-                .lineLimit(1)
+                .frame(maxWidth: .infinity, alignment: .leading)
             Spacer(minLength: 0)
         }
-        .padding(.horizontal, 10)
-        .padding(.top, 8)
-        .padding(.bottom, 4)
+        .padding(.horizontal, 16)
+        .padding(.top, 10)
+        .padding(.bottom, 6)
     }
 
     private var colorContentView: some View {
@@ -290,22 +289,17 @@ struct ClipboardCardView: View {
 
     private var footerView: some View {
         Text(footerText)
-            .font(.system(size: 10))
-            .foregroundColor(Color(white: 0.55))
+            .font(.system(size: 11))
+            .foregroundColor(Color(white: 0.6))
             .lineLimit(1)
             .frame(maxWidth: .infinity)
-            .padding(.vertical, 5)
-            .background(Color(red: 0.13, green: 0.13, blue: 0.14))
-            .overlay(alignment: .top) {
-                Rectangle()
-                    .fill(Color.white.opacity(0.07))
-                    .frame(height: 0.5)
-            }
+            .padding(.bottom, 10)
     }
 
     private var footerText: String {
         switch item.itemType {
         case .text:
+            if kind == .link { return "" }
             let count = item.characterCount ?? 0
             return String(format: String(localized: "mainpanel.text.characterCountFormat"), count)
         case .image:

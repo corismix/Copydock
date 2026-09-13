@@ -37,7 +37,8 @@ struct MainPanelView: View {
             let cs = PanelLayout.cardSize(position: position, screenSize: geo.size)
             ZStack {
                 panelContent(position: position)
-                    .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
+                    .background(Color(red: 0.122, green: 0.122, blue: 0.122))
+                    .clipShape(UnevenRoundedRectangle(topLeadingRadius: 12, topTrailingRadius: 12))
                     .offset(x: panelOffsetX(position: position), y: panelOffsetY(position: position))
                     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: isVisible)
                     .animation(.spring(response: 0.3, dampingFraction: 0.8), value: position)
@@ -90,7 +91,6 @@ struct MainPanelView: View {
             // Top/bottom panel: fills screen width, cards arranged horizontally.
             let bar = VStack(spacing: 0) {
                 PanelTopBarView(viewModel: viewModel)
-                Divider().background(Color(nsColor: .separatorColor))
                 if viewModel.isAboutMode {
                     AboutPanelView()
                 } else {

@@ -71,30 +71,29 @@ enum Constants {
 
 enum PanelLayout {
     /// Fixed height for horizontal panels (bottom/top).
-    static let panelBarHeight: CGFloat = 280
+    static let panelBarHeight: CGFloat = 332
     /// Fixed width for vertical panels (left/right).
     static let panelVerticalWidth: CGFloat = 360
     /// Top bar height for horizontal layout.
-    static let topBarHeightH: CGFloat = 50
+    static let topBarHeightH: CGFloat = 60
     /// Top bar height for vertical layout (2-row compact).
     static let topBarHeightV: CGFloat = 70
     /// Spacing between cards.
-    static let cardSpacing: CGFloat = 12
+    static let cardSpacing: CGFloat = 16
     /// Horizontal padding inside the panel.
-    static let panelPadding: CGFloat = 20
+    static let panelPadding: CGFloat = 24
     /// Vertical padding inside the panel (top and bottom).
     static let vertPadding: CGFloat = 12
     /// Fixed card height in horizontal layout.
-    static let cardHeightH: CGFloat = 204
+    static let cardHeightH: CGFloat = 240
+    /// Fixed card width in horizontal layout.
+    static let cardWidthH: CGFloat = 240
 
-    /// Computes card size based on panel position and screen dimensions, filling exactly 9 cards across the visible area.
+    /// Computes card size based on panel position and screen dimensions.
     static func cardSize(position: AppSettings.PanelPosition, screenSize: CGSize) -> CGSize {
         switch position {
         case .bottom, .top:
-            // About five and a half cards visible across the width, like Paste.
-            let visible: CGFloat = 5.4
-            let w = (screenSize.width - 2 * panelPadding - (visible - 1) * cardSpacing) / visible
-            return CGSize(width: max(180, w), height: cardHeightH)
+            return CGSize(width: cardWidthH, height: cardHeightH)
         case .left, .right:
             // Vertical card width fills the panel width minus left/right padding.
             let w = panelVerticalWidth - 2 * panelPadding // 320

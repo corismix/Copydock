@@ -8,43 +8,31 @@
 import SwiftUI
 import AppKit
 
-// MARK: - Arrow Indicator View
+// MARK: - Share Anchor
 
-/// Arrow indicator that points down toward the item card (rendered below the preview frame).
-struct ArrowIndicatorView: View {
-    let arrowOffset: CGFloat // Horizontal offset from window center (positive = right, negative = left).
-    
-    private let arrowWidth: CGFloat = 20
-    private let arrowHeight: CGFloat = 10
-    
-    var body: some View {
-        GeometryReader { geometry in
-            // Arrow shape pointing downward toward the item card.
-            // The arrow area is transparent, but the arrow itself uses the same VisualEffectView as the preview frame for colour consistency.
-            ZStack(alignment: .top) {
-                // Use VisualEffectView for the arrow background so it matches the preview frame exactly.
-                VisualEffectView(material: .hudWindow, blendingMode: .behindWindow)
-                    .frame(height: arrowHeight)
-                    .clipShape(
-                        // Clip to the arrow triangle shape.
-                        Path { path in
-                            let windowCenterX = geometry.size.width / 2
-                            let centerX = windowCenterX + arrowOffset
-                            // Clamp offset so the arrow stays within the window bounds.
-                            let minX = max(arrowWidth / 2, min(centerX, geometry.size.width - arrowWidth / 2))
-                            
-                            // Arrow points downward from below the preview frame toward the item card.
-                            path.move(to: CGPoint(x: minX - arrowWidth / 2, y: 0))
-                            path.addLine(to: CGPoint(x: minX, y: arrowHeight))
-                            path.addLine(to: CGPoint(x: minX + arrowWidth / 2, y: 0))
-                            path.closeSubpath()
-                        }
-                    )
-                    .shadow(color: .black.opacity(0.1), radius: 2, x: 0, y: 1)
-            }
-        }
-        .frame(height: arrowHeight)
-        .background(Color.clear) // Ensure transparent background.
+/// Holds the invisible AppKit view the share picker anchors to.
+@MainActor
+final class ShareAnchorPresenter: ObservableObject {
+    weak var anchorView: NSView?
+
+    func present(_ items: [Any]) {
+        guard !items.isEmpty, let anchorView, anchorView.window != nil else { return }
+        let picker = NSSharingServicePicker(items: items)
+        picker.show(relativeTo: anchorView.bounds, of: anchorView, preferredEdge: .minY)
+    }
+}
+
+private struct ShareAnchorView: NSViewRepresentable {
+    let presenter: ShareAnchorPresenter
+
+    func makeNSView(context: Context) -> NSView {
+        let view = NSView(frame: .zero)
+        presenter.anchorView = view
+        return view
+    }
+
+    func updateNSView(_ nsView: NSView, context: Context) {
+        presenter.anchorView = nsView
     }
 }
 
@@ -54,7 +42,7 @@ struct ArrowIndicatorView: View {
 struct AsyncFileIconView: View {
     let filePath: String
     @State private var icon: NSImage?
-    
+
     var body: some View {
         Group {
             if let icon = icon {
@@ -72,22 +60,18 @@ struct AsyncFileIconView: View {
             await loadIcon()
         }
     }
-    
+
     private func loadIcon() async {
-        // Reset the icon first.
         icon = nil
-        
+
         guard FileManager.default.fileExists(atPath: filePath) else {
             return
         }
-        
-        // Load the icon asynchronously.
-        // Note: NSWorkspace.shared.icon(forFile:) is synchronous,
-        // but running it on a background task avoids blocking main-thread UI updates.
+
         let loadedIcon = await Task.detached(priority: .userInitiated) {
             return NSWorkspace.shared.icon(forFile: filePath)
         }.value
-        
+
         await MainActor.run {
             icon = loadedIcon
         }
@@ -98,32 +82,28 @@ struct AsyncFileIconView: View {
 
 struct PreviewView: View {
     @ObservedObject var viewModel: PreviewViewModel
-    
+    @ObservedObject var clipboardViewModel: ClipboardViewModel
+    let onClose: () -> Void
+    let onEdit: () -> Void
+
+    @StateObject private var sharePresenter = ShareAnchorPresenter()
+
+    private let bodyOpacity: CGFloat = 0.85
+
     var body: some View {
         VStack(spacing: 0) {
-            Group {
-                if let preset = viewModel.preset {
-                    presetPreviewView(preset: preset)
-                } else if let item = viewModel.item {
-                    previewContent(for: item)
-                } else {
-                    emptyStateView
-                }
-            }
-            .frame(width: 800, height: 400)
-            .background(VisualEffectView(material: .hudWindow, blendingMode: .behindWindow))
-            .accessibilityElement(children: .contain)
-            .accessibilityLabel(previewAccessibilityLabel())
-            
-            if viewModel.item != nil || viewModel.preset != nil {
-                ArrowIndicatorView(arrowOffset: viewModel.arrowOffset)
-                    .frame(width: 800)
-            }
+            header
+            contentBox
+            footer
+            Spacer(minLength: 0)
         }
+        .frame(width: viewModel.popoverSize.width, height: viewModel.popoverSize.height, alignment: .top)
+        .accessibilityElement(children: .contain)
+        .accessibilityLabel(accessibilityLabel())
         .id(viewModel.item?.id ?? viewModel.preset?.id)
     }
-    
-    private func previewAccessibilityLabel() -> String {
+
+    private func accessibilityLabel() -> String {
         if viewModel.preset != nil {
             return String(localized: "accessibility.preview.text")
         }
@@ -135,238 +115,253 @@ struct PreviewView: View {
         }
     }
 
-    private func presetPreviewView(preset: RegexPreset) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            HStack(spacing: 8) {
-                Image(systemName: "curlybraces")
-                    .font(.system(size: 14))
-                    .foregroundColor(.secondary)
-                Text("Regex")
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                Spacer()
-            }
-            .padding(.horizontal, 20)
-            .padding(.top, 20)
-            Divider()
-                .background(Color(nsColor: .separatorColor))
-            VStack(alignment: .leading, spacing: 8) {
-                Text(preset.name)
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundColor(.primary)
-                Text(preset.pattern)
-                    .font(.system(size: 12, design: .monospaced))
-                    .foregroundColor(.secondary)
-                    .textSelection(.enabled)
-                    .frame(maxWidth: .infinity, alignment: .leading)
-            }
-            .padding(20)
-            Spacer()
-        }
+    // MARK: - Header
+
+    private var title: String {
+        if viewModel.preset != nil { return String(localized: "mainpanel.filter.regex") }
+        return viewModel.item.map { CardKind(item: $0).label } ?? ""
     }
-    
-    @ViewBuilder
-    private func previewContent(for item: ClipboardItemModel) -> some View {
-        switch item.itemType {
-        case .text:
-            // Text: show plain text only, without type/word-count/time metadata.
-            textPreviewView(for: item)
-        case .image:
-            // Image: show header info and the image.
-            VStack(spacing: 0) {
-                topBar(for: item)
-                Divider()
-                    .background(Color(nsColor: .separatorColor))
-                imagePreviewView(for: item)
-                    .padding(20)
+
+    private var header: some View {
+        ZStack {
+            HStack(spacing: 6) {
+                Spacer(minLength: 0)
+                pinMenu
+                shareButton
+                editButton
             }
-        case .file:
-            // File: show header info and the file list.
-            VStack(spacing: 0) {
-                topBar(for: item)
-                Divider()
-                    .background(Color(nsColor: .separatorColor))
-                ScrollView {
-                    filePreviewView(for: item)
-                        .padding(20)
+            .padding(.trailing, 7)
+
+            HStack(spacing: 6) {
+                Button(action: onClose) {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundColor(.white.opacity(bodyOpacity))
+                        .frame(width: 17, height: 11)
+                        .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+                .accessibilityLabel(String(localized: "preview.action.close"))
+
+                Text(title)
+                    .font(.system(size: PreviewLayout.fontSize, weight: .bold))
+                    .foregroundColor(.white.opacity(bodyOpacity))
+
+                Spacer(minLength: 0)
+            }
+            .padding(.leading, 9)
+        }
+        .frame(height: 38)
+    }
+
+    private var currentPinState: Bool {
+        guard let item = viewModel.item else { return false }
+        let fresh = clipboardViewModel.items.first(where: { $0.id == item.id }) ?? item
+        return ClipboardService.shared.isInAnyPinboard(fresh)
+    }
+
+    private var pinMenu: some View {
+        Menu {
+            if AppSettings.pinboardCount == 0 {
+                Text(String(localized: "mainpanel.context.createPinboard"))
+            } else {
+                ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
+                    Button {
+                        if let item = viewModel.item {
+                            clipboardViewModel.toggleInPinboard(item, index: index)
+                        }
+                    } label: {
+                        if let item = viewModel.item, ClipboardService.shared.isInPinboard(item, index: index) {
+                            Label(AppSettings.pinboardName(at: index), systemImage: "checkmark")
+                        } else {
+                            Text(AppSettings.pinboardName(at: index))
+                        }
+                    }
                 }
             }
+        } label: {
+            HStack(spacing: 3) {
+                Image(systemName: currentPinState ? "circle.inset.filled" : "circle.dashed")
+                    .font(.system(size: 13))
+                Image(systemName: "chevron.down")
+                    .font(.system(size: 8, weight: .semibold))
+            }
+            .foregroundColor(.white.opacity(bodyOpacity))
+            .frame(width: 45, height: 24)
+            .contentShape(Rectangle())
         }
+        .menuIndicator(.hidden)
+        .buttonStyle(.plain)
+        .menuStyle(.borderlessButton)
+        .fixedSize()
+        .accessibilityLabel(String(localized: "preview.action.pin"))
     }
-    
-    private var emptyStateView: some View {
-        VStack {
-            Spacer()
-            Text(String(localized: "mainpanel.empty.noMatches"))
+
+    private var shareButton: some View {
+        Button {
+            sharePresenter.present(shareItems)
+        } label: {
+            Image(systemName: "square.and.arrow.up")
                 .font(.system(size: 13))
-                .foregroundColor(.secondary)
-            Spacer()
+                .foregroundColor(.white.opacity(bodyOpacity))
+                .frame(width: 34, height: 24)
+                .contentShape(Rectangle())
         }
+        .buttonStyle(.plain)
+        .background(ShareAnchorView(presenter: sharePresenter).frame(width: 1, height: 1))
+        .accessibilityLabel(String(localized: "preview.action.share"))
     }
-    
-    // MARK: - Top Bar
-    
-    private func topBar(for item: ClipboardItemModel) -> some View {
-        HStack(spacing: 12) {
-            // Type icon and name — from item properties.
-            Image(systemName: item.itemType.iconName)
-                .font(.system(size: 14))
-                .foregroundColor(.secondary)
-            
-            Text(item.itemType.displayName)
-                .font(.system(size: 13, weight: .medium))
-                .foregroundColor(.primary)
-            
-            Spacer()
-            
-            // Source app info — matches the main panel display.
-            if let appIcon = item.sourceAppIcon {
-                Image(nsImage: appIcon)
-                    .resizable()
-                    .frame(width: 16, height: 16)
-            }
-            
-            if let appName = item.sourceAppName {
-                Text(appName)
-                    .font(.system(size: 11))
-                    .foregroundColor(.secondary)
-            }
-            
-            // Timestamp — from item properties.
-            Text(item.detailedTime)
-                .font(.system(size: 11))
-                .foregroundColor(.secondary)
+
+    private var editButton: some View {
+        Button(action: onEdit) {
+            Text(String(localized: "preview.action.edit"))
+                .font(.system(size: PreviewLayout.fontSize))
+                .foregroundColor(.white.opacity(bodyOpacity))
+                .frame(width: 45.5, height: 24)
+                .background(
+                    RoundedRectangle(cornerRadius: 6, style: .continuous)
+                        .stroke(Color.white.opacity(0.16), lineWidth: 1)
+                )
+                .contentShape(Rectangle())
         }
-        .padding(.horizontal, 20)
-        .padding(.vertical, 12)
+        .buttonStyle(.plain)
     }
-    
-    // MARK: - Content View
-    
-    @ViewBuilder
-    private func contentView(for item: ClipboardItemModel) -> some View {
+
+    private var shareItems: [Any] {
+        guard let item = viewModel.item else { return [] }
         switch item.itemType {
         case .text:
-            textPreviewView(for: item)
+            guard let text = item.plainText, !text.isEmpty else { return [] }
+            return [text]
         case .image:
-            imagePreviewView(for: item)
+            if let image = viewModel.previewImage { return [image] }
+            if let data = item.imageData, let image = NSImage(data: data) { return [image] }
+            return []
         case .file:
-            filePreviewView(for: item)
+            return (item.filePathsArray ?? []).map { URL(fileURLWithPath: $0) }
         }
     }
-    
-    // MARK: - Text Preview
-    
-    private func textPreviewView(for item: ClipboardItemModel) -> some View {
-        // Plain text preview: show text only, no metadata, for optimal render performance.
+
+    // MARK: - Content Box
+
+    private var contentBox: some View {
+        ZStack {
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .fill(Color(red: 0.078, green: 0.078, blue: 0.078))
+            content
+        }
+        .frame(width: viewModel.contentBoxSize.width, height: viewModel.contentBoxSize.height)
+        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+        .overlay(
+            RoundedRectangle(cornerRadius: 8, style: .continuous)
+                .strokeBorder(Color(red: 0.169, green: 0.169, blue: 0.169), lineWidth: 1)
+        )
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        if let preset = viewModel.preset {
+            presetContent(preset: preset)
+        } else if let item = viewModel.item {
+            switch item.itemType {
+            case .text: textContent(for: item)
+            case .image: imageContent(for: item)
+            case .file: fileContent(for: item)
+            }
+        }
+    }
+
+    private func presetContent(preset: RegexPreset) -> some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(preset.name)
+                .font(.system(size: 15, weight: .semibold))
+                .foregroundColor(.white.opacity(0.9))
+            Text(preset.pattern)
+                .font(.system(size: 12, design: .monospaced))
+                .foregroundColor(.white.opacity(0.6))
+                .textSelection(.enabled)
+            Spacer(minLength: 0)
+        }
+        .padding(14)
+        .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
+    }
+
+    private func textContent(for item: ClipboardItemModel) -> some View {
         ScrollView {
             if let text = item.plainText, !text.isEmpty {
                 Text(text)
-                    .font(.system(size: 13, design: .monospaced))
-                    .foregroundColor(.primary)
+                    .font(.system(size: PreviewLayout.fontSize))
+                    .lineSpacing(0.5)
+                    .foregroundColor(.white.opacity(bodyOpacity))
                     .textSelection(.enabled)
                     .frame(maxWidth: .infinity, alignment: .leading)
-                    .fixedSize(horizontal: false, vertical: true) // Optimise layout performance.
-                    .padding(20)
-                    .id(item.id) // Help SwiftUI identify view changes.
+                    .fixedSize(horizontal: false, vertical: true)
+                    .padding(.horizontal, 13.5)
+                    .padding(.vertical, 10)
             } else {
-                VStack {
-                    Spacer()
-                    Text(String(localized: "mainpanel.empty.noMatches"))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                    Spacer()
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyState
             }
         }
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
     }
-    
-    // MARK: - Image Preview
-    
-    private func imagePreviewView(for item: ClipboardItemModel) -> some View {
-        VStack(spacing: 12) {
-            if let sizeInfo = viewModel.previewImageSizeInfo {
-                Text(sizeInfo)
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-            
+
+    private func imageContent(for item: ClipboardItemModel) -> some View {
+        Group {
             if let image = viewModel.previewImage {
                 Image(nsImage: image)
                     .resizable()
                     .aspectRatio(contentMode: .fit)
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
-                    .background(Color(nsColor: .controlBackgroundColor))
-                    .clipShape(RoundedRectangle(cornerRadius: 8))
-                    .id(item.id)
+                    .padding(10)
             } else {
-                VStack(spacing: 8) {
-                    Image(systemName: "photo")
-                        .font(.system(size: 48))
-                        .foregroundColor(.secondary)
-                    Text(String(localized: "mainpanel.empty.noMatches"))
-                        .font(.system(size: 13))
-                        .foregroundColor(.secondary)
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyState
             }
         }
     }
-    
-    // MARK: - File Preview
-    
-    private func filePreviewView(for item: ClipboardItemModel) -> some View {
-        VStack(alignment: .leading, spacing: 16) {
-            // File count — matches the main panel display.
-            if let count = item.fileCount {
-                Text(String(format: String(localized: "mainpanel.file.fileCountFormat"), count))
-                    .font(.system(size: 12))
-                    .foregroundColor(.secondary)
-            }
-            
-            // File list — LazyVStack for performance.
+
+    private func fileContent(for item: ClipboardItemModel) -> some View {
+        ScrollView {
             if let paths = item.filePathsArray, !paths.isEmpty {
-                ScrollView {
-                    LazyVStack(alignment: .leading, spacing: 8) {
-                        ForEach(Array(paths.enumerated()), id: \.offset) { index, path in
-                            fileRow(path: path, index: index)
-                        }
+                LazyVStack(alignment: .leading, spacing: 8) {
+                    ForEach(Array(paths.enumerated()), id: \.offset) { _, path in
+                        fileRow(path: path)
                     }
                 }
-                .frame(maxHeight: 300)
+                .padding(10)
             } else {
-                Text(String(localized: "mainpanel.empty.noMatches"))
-                    .font(.system(size: 13))
-                    .foregroundColor(.secondary)
-                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                emptyState
             }
         }
     }
-    
-    private func fileRow(path: String, index: Int) -> some View {
+
+    private var emptyState: some View {
+        VStack {
+            Spacer()
+            Text(String(localized: "mainpanel.empty.noMatches"))
+                .font(.system(size: PreviewLayout.fontSize))
+                .foregroundColor(.white.opacity(0.55))
+            Spacer()
+        }
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+    }
+
+    private func fileRow(path: String) -> some View {
         HStack(spacing: 12) {
-            // File icon — loaded asynchronously.
             AsyncFileIconView(filePath: path)
-            
+
             VStack(alignment: .leading, spacing: 4) {
-                // File name.
                 let fileURL = URL(fileURLWithPath: path)
                 Text(fileURL.lastPathComponent)
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundColor(.primary)
-                
-                // File path.
+                    .font(.system(size: PreviewLayout.fontSize, weight: .medium))
+                    .foregroundColor(.white.opacity(bodyOpacity))
+                    .lineLimit(1)
                 Text(path)
                     .font(.system(size: 11))
-                    .foregroundColor(.secondary)
+                    .foregroundColor(.white.opacity(0.55))
                     .lineLimit(1)
             }
-            
+
             Spacer()
-            
-            // File extension.
+
             let fileURL = URL(fileURLWithPath: path)
             if !fileURL.pathExtension.isEmpty {
                 HStack(spacing: 4) {
@@ -383,8 +378,32 @@ struct PreviewView: View {
             }
         }
         .padding(12)
-        .background(Color(nsColor: .controlBackgroundColor))
+        .background(Color.white.opacity(0.05))
         .clipShape(RoundedRectangle(cornerRadius: 6))
+    }
+
+    // MARK: - Footer
+
+    private var footer: some View {
+        HStack(spacing: 0) {
+            statsText
+            Spacer(minLength: 0)
+        }
+        .padding(.top, 10)
+        .padding(.leading, 11)
+        .padding(.trailing, 7)
+        .frame(height: 38, alignment: .top)
+    }
+
+    private var statsText: Text {
+        var result = Text("")
+        for (index, piece) in viewModel.statsPieces.enumerated() {
+            if index > 0 {
+                result = result + Text(" · ").foregroundColor(.white.opacity(0.26))
+            }
+            result = result + Text(piece).foregroundColor(.white.opacity(0.55))
+        }
+        return result.font(.system(size: PreviewLayout.fontSize))
     }
 }
 
@@ -394,6 +413,10 @@ struct PreviewView: View {
         itemType: .text,
         plainText: "这是一段预览文本内容\n可以包含多行\n用于测试预览窗口的显示效果"
     ))
-    viewModel.updateArrowOffset(0)
-    return PreviewView(viewModel: viewModel)
+    return PreviewView(
+        viewModel: viewModel,
+        clipboardViewModel: ClipboardViewModel(),
+        onClose: {},
+        onEdit: {}
+    )
 }

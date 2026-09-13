@@ -30,18 +30,16 @@ struct PanelTopBarView: View {
                     searchFieldFocused = true
                 } label: {
                     Image(systemName: "magnifyingglass")
-                        .font(.system(size: 14, weight: .medium))
-                        .foregroundColor(.white.opacity(0.85))
-                        .frame(width: 24, height: 24)
+                        .font(.system(size: 15, weight: .medium))
+                        .foregroundColor(.white.opacity(0.9))
+                        .frame(width: 34, height: 34)
                         .contentShape(Rectangle())
                 }
                 .buttonStyle(.plain)
                 .accessibilityLabel(Text("accessibility.mainpanel.search"))
             }
 
-            ListMenuButton(viewModel: viewModel)
-
-            PinboardChipsView(viewModel: viewModel)
+            ListChipsView(viewModel: viewModel)
 
             AddMenuButton(viewModel: viewModel)
 
@@ -57,8 +55,8 @@ struct PanelTopBarView: View {
 
             ActionsMenuButton(viewModel: viewModel)
         }
-        .padding(.horizontal, 16)
-        .padding(.vertical, 8)
+        .frame(height: PanelLayout.topBarHeightH)
+        .padding(.horizontal, PanelLayout.panelPadding)
     }
 }
 
@@ -157,107 +155,84 @@ struct FiltersMenuButton: View {
     }
 }
 
-// MARK: - Current list menu ("Clipboard" + pinboards)
+// MARK: - List chips (Clipboard + pinboards, Paste-style)
 
-struct ListMenuButton: View {
+struct ListChipsView: View {
     @ObservedObject var viewModel: ClipboardViewModel
-
-    private var currentListName: String {
-        if let idx = viewModel.activePinboardIndex {
-            return AppSettings.pinboardName(at: idx)
-        }
-        return String(localized: "mainpanel.list.clipboard")
-    }
+    @State private var contentWidth: CGFloat = 300
 
     var body: some View {
-        Menu {
-            Button {
-                viewModel.exitPinboard()
-                viewModel.isAboutMode = false
-            } label: {
-                Label(String(localized: "mainpanel.list.clipboardHistory"), systemImage: "clock")
-            }
-            if AppSettings.pinboardCount > 0 {
-                Divider()
+        ScrollView(.horizontal, showsIndicators: false) {
+            HStack(spacing: 6) {
+                ListChip(
+                    title: String(localized: "mainpanel.list.clipboard"),
+                    icon: "clock",
+                    dotColor: nil,
+                    isSelected: viewModel.activePinboardIndex == nil && !viewModel.isAboutMode
+                ) {
+                    viewModel.exitPinboard()
+                    viewModel.isAboutMode = false
+                }
                 ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
-                    Button {
-                        viewModel.selectedType = nil
-                        viewModel.isRegexPresetMode = false
-                        viewModel.isAboutMode = false
-                        viewModel.showPinboard(index: index)
-                    } label: {
-                        Label(AppSettings.pinboardName(at: index), systemImage: "circle.fill")
-                            .tint(AppSettings.pinboardColor(at: index))
+                    ListChip(
+                        title: AppSettings.pinboardName(at: index),
+                        icon: nil,
+                        dotColor: AppSettings.pinboardColor(at: index),
+                        isSelected: viewModel.activePinboardIndex == index
+                    ) {
+                        if viewModel.activePinboardIndex == index {
+                            viewModel.exitPinboard()
+                        } else {
+                            viewModel.selectedType = nil
+                            viewModel.isRegexPresetMode = false
+                            viewModel.isAboutMode = false
+                            viewModel.showPinboard(index: index)
+                        }
                     }
                 }
             }
-            Divider()
-            Button { viewModel.createNewPinboard() } label: {
-                Label(String(localized: "mainpanel.context.createPinboard"), systemImage: "plus")
-            }
-        } label: {
-            HStack(spacing: 5) {
-                if let idx = viewModel.activePinboardIndex {
-                    Circle()
-                        .fill(AppSettings.pinboardColor(at: idx))
-                        .frame(width: 8, height: 8)
-                } else {
-                    Image(systemName: "clock")
-                        .font(.system(size: 11, weight: .medium))
-                }
-                Text(currentListName)
-                    .font(.system(size: 12, weight: .medium))
-                Image(systemName: "chevron.down")
-                    .font(.system(size: 8, weight: .bold))
-                    .foregroundColor(.secondary)
-            }
-            .padding(.horizontal, 10)
-            .padding(.vertical, 6)
-            .background(Color(nsColor: .controlBackgroundColor))
-            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .padding(.horizontal, 2)
+            .onGeometryChange(for: CGFloat.self) { $0.size.width } action: { contentWidth = $0 }
         }
-        .menuStyle(.borderlessButton)
-        .menuIndicator(.hidden)
+        .frame(width: min(contentWidth, 640))
     }
 }
 
-// MARK: - Pinboard chips
-
-struct PinboardChipsView: View {
-    @ObservedObject var viewModel: ClipboardViewModel
+private struct ListChip: View {
+    let title: String
+    let icon: String?
+    let dotColor: Color?
+    let isSelected: Bool
+    let action: () -> Void
 
     var body: some View {
-        HStack(spacing: 4) {
-            ForEach(0..<AppSettings.pinboardCount, id: \.self) { index in
-                Button {
-                    if viewModel.activePinboardIndex == index {
-                        viewModel.exitPinboard()
-                    } else {
-                        viewModel.selectedType = nil
-                        viewModel.isRegexPresetMode = false
-                        viewModel.isAboutMode = false
-                        viewModel.showPinboard(index: index)
-                    }
-                } label: {
-                    HStack(spacing: 5) {
-                        Circle()
-                            .fill(AppSettings.pinboardColor(at: index))
-                            .frame(width: 8, height: 8)
-                        Text(AppSettings.pinboardName(at: index))
-                            .font(.system(size: 11, weight: .medium))
-                            .lineLimit(1)
-                    }
-                    .padding(.horizontal, 8)
-                    .padding(.vertical, 5)
-                    .background(viewModel.activePinboardIndex == index
-                                ? AppSettings.pinboardColor(at: index).opacity(0.18)
-                                : Color.clear)
-                    .clipShape(RoundedRectangle(cornerRadius: 7))
+        Button(action: action) {
+            HStack(spacing: 6) {
+                if let icon {
+                    Image(systemName: icon)
+                        .font(.system(size: 11, weight: .semibold))
                 }
-                .buttonStyle(.plain)
-                .accessibilityLabel(Text(AppSettings.pinboardName(at: index)))
+                if let dotColor {
+                    Circle()
+                        .fill(dotColor)
+                        .frame(width: 8, height: 8)
+                }
+                Text(title)
+                    .font(.system(size: 12, weight: .medium))
+                    .lineLimit(1)
             }
+            .foregroundColor(isSelected ? .white : Color(white: 0.82))
+            .padding(.horizontal, 12)
+            .padding(.vertical, 7)
+            .background(isSelected ? Color.white.opacity(0.09) : Color.clear)
+            .clipShape(RoundedRectangle(cornerRadius: 8))
+            .overlay(
+                RoundedRectangle(cornerRadius: 8)
+                    .strokeBorder(isSelected ? Color.white.opacity(0.18) : Color.clear, lineWidth: 1)
+            )
         }
+        .buttonStyle(.plain)
+        .accessibilityLabel(Text(title))
     }
 }
 
@@ -276,9 +251,9 @@ struct AddMenuButton: View {
             }
         } label: {
             Image(systemName: "plus")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.secondary)
-                .frame(width: 26, height: 26)
+                .frame(width: 34, height: 34)
                 .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
@@ -320,9 +295,9 @@ struct ActionsMenuButton: View {
             }
         } label: {
             Image(systemName: "ellipsis")
-                .font(.system(size: 13, weight: .medium))
+                .font(.system(size: 15, weight: .medium))
                 .foregroundColor(.secondary)
-                .frame(width: 26, height: 26)
+                .frame(width: 34, height: 34)
                 .contentShape(Rectangle())
         }
         .menuStyle(.borderlessButton)
@@ -376,8 +351,7 @@ struct PanelTopBarVerticalView: View {
             }
 
             HStack(spacing: 6) {
-                ListMenuButton(viewModel: viewModel)
-                PinboardChipsView(viewModel: viewModel)
+                ListChipsView(viewModel: viewModel)
                 if viewModel.panelMode == .pasteStack {
                     ModeChip(title: String(localized: "mainpanel.pasteStack.title"),
                              icon: "rectangle.stack.fill",

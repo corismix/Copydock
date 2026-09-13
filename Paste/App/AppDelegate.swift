@@ -309,7 +309,11 @@ class AppDelegate: NSObject, NSApplicationDelegate {
                 return true
             }
             if !isSearchFieldActive() {
-                panelCoordinator.showPreviewWindow()
+                if viewModel.isPreviewVisible {
+                    panelCoordinator.hidePreviewWindow()
+                } else {
+                    panelCoordinator.showPreviewWindow()
+                }
                 return true
             }
         case 0: // A — Cmd+A select all

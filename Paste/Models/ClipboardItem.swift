@@ -95,7 +95,7 @@ struct ClipboardItemModel: Identifiable, Equatable {
     
     private static let relativeFormatter: RelativeDateTimeFormatter = {
         let f = RelativeDateTimeFormatter()
-        f.unitsStyle = .abbreviated
+        f.unitsStyle = .full
         return f
     }()
 
