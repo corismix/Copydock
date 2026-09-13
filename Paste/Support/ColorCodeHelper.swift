@@ -11,20 +11,35 @@ import SwiftUI
 
 enum ColorCodeHelper {
 
-    /// Returns NSColor only when the entire content is exactly a color code (no other text, no extra lines).
+    /// Returns NSColor only when the entire content is exactly a six-digit hex color,
+    /// matching Paste's rules: a leading `#` marks it as a color; without it, the code
+    /// must contain at least one letter A-F so verification codes like 235442 stay text.
+    /// Three-digit shorthand, rgb()/hsl(), and hex embedded in other text stay text.
     static func color(from string: String) -> NSColor? {
         let trimmed = string.trimmingCharacters(in: .whitespacesAndNewlines)
         guard !trimmed.isEmpty, !trimmed.contains("\n") else { return nil }
-        if trimmed.hasPrefix("#") {
-            return parseHex(trimmed)
+
+        var hex = trimmed
+        let hadHash = hex.hasPrefix("#")
+        if hadHash { hex.removeFirst() }
+
+        guard hex.count == 6,
+              hex.allSatisfy({ $0.isHexDigit }) else { return nil }
+
+        if !hadHash {
+            let hasLetter = hex.contains(where: { "abcdefABCDEF".contains($0) })
+            guard hasLetter else { return nil }
         }
-        if trimmed.lowercased().hasPrefix("rgb") {
-            return parseRgbRgba(trimmed)
-        }
-        if trimmed.lowercased().hasPrefix("hsl") {
-            return parseHslHsla(trimmed)
-        }
-        return nil
+        return parseHex6(hex)
+    }
+
+    private static func parseHex6(_ hex: String) -> NSColor? {
+        let chars = [Character](hex)
+        guard chars.count == 6,
+              let r = byteFromHex2(chars[0], chars[1]),
+              let g = byteFromHex2(chars[2], chars[3]),
+              let b = byteFromHex2(chars[4], chars[5]) else { return nil }
+        return NSColor(red: CGFloat(r) / 255, green: CGFloat(g) / 255, blue: CGFloat(b) / 255, alpha: 1)
     }
 
     /// Contrasting color (white or black) for use on the given background.
