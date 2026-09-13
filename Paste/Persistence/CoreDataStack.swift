@@ -35,10 +35,22 @@ class CoreDataStack {
             description?.cloudKitContainerOptions = nil
         }
         
-        container.loadPersistentStores { _, error in
+        container.loadPersistentStores { storeDescription, error in
             if let error = error as NSError? {
-                // In production a more graceful recovery should be attempted.
-                fatalError("CoreData failed to load: \(error), \(error.userInfo)")
+                // Unsigned/ad-hoc builds carry no iCloud entitlement, so a
+                // CloudKit-configured store cannot load. Fall back to a local
+                // store instead of taking the app down.
+                if storeDescription.cloudKitContainerOptions != nil {
+                    NSLog("CloudKit store load failed (\(error)); retrying without iCloud sync")
+                    storeDescription.cloudKitContainerOptions = nil
+                    container.loadPersistentStores { _, retryError in
+                        if let retryError = retryError as NSError? {
+                            fatalError("CoreData failed to load: \(retryError), \(retryError.userInfo)")
+                        }
+                    }
+                } else {
+                    fatalError("CoreData failed to load: \(error), \(error.userInfo)")
+                }
             }
         }
         

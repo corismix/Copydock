@@ -28,6 +28,7 @@ jobs:
             -derivedDataPath build/DerivedData \
             -skipPackagePluginValidation \
             CODE_SIGN_IDENTITY="-" DEVELOPMENT_TEAM="" \
+            CODE_SIGN_ENTITLEMENTS="Paste/PasteDistribution.entitlements" \
             build
 
       - name: Test
@@ -39,6 +40,14 @@ jobs:
             -skipPackagePluginValidation \
             CODE_SIGNING_ALLOWED=NO \
             test
+
+      - name: Verify signature
+        run: |
+          APP="build/DerivedData/Build/Products/Release/Copydock.app"
+          test -d "$APP"
+          test -x "$APP/Contents/MacOS/Copydock"
+          codesign --verify --deep --strict --verbose=2 "$APP"
+          codesign -d --entitlements :- "$APP"
 
       - name: Package dmg
         run: |
