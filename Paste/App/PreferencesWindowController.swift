@@ -15,7 +15,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate {
     private init() {
         let hostingView = NSHostingView(rootView: PreferencesView())
         let window = NSWindow(
-            contentRect: NSRect(x: 0, y: 0, width: 760, height: 700),
+            contentRect: NSRect(x: 0, y: 0, width: 940, height: 780),
             styleMask: [.titled, .closable, .miniaturizable, .resizable],
             backing: .buffered,
             defer: false
@@ -24,7 +24,7 @@ final class PreferencesWindowController: NSWindowController, NSWindowDelegate {
         window.title = String(localized: "status.menu.preferences", defaultValue: "偏好设置…")
         window.contentView = hostingView
         window.isReleasedWhenClosed = false
-        window.minSize = NSSize(width: 720, height: 640)
+        window.minSize = NSSize(width: 880, height: 720)
         window.center()
         
         super.init(window: window)

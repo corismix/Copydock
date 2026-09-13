@@ -70,6 +70,7 @@ final class PanelCoordinator {
         panel.isOpaque = false
         panel.hasShadow = true
         panel.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary]
+        panel.sharingType = AppSettings.showDuringScreenSharing ? .readOnly : .none
 
         panel.contentView = FirstMouseHostingView(rootView: MainPanelView(viewModel: viewModel))
         (panel as? MainPanel)?.onKeyDown = onKeyDown
@@ -88,6 +89,10 @@ final class PanelCoordinator {
 
     func startObserving() {
         let nc = NotificationCenter.default
+        nc.addObserver(forName: UserDefaults.didChangeNotification, object: nil, queue: .main) { [weak self] _ in
+            guard let panel = self?.panel else { return }
+            panel.sharingType = AppSettings.showDuringScreenSharing ? .readOnly : .none
+        }
 
         observers.append(nc.addObserver(forName: AppNotification.requestCloseAndPaste, object: nil, queue: .main) { [weak self] _ in
             Task { @MainActor [weak self] in

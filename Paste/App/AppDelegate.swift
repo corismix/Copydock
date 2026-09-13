@@ -92,6 +92,7 @@ class AppDelegate: NSObject, NSApplicationDelegate {
         panelCoordinator.startObserving()
         setupClipboardMonitor()
         hotKeyCoordinator.setup()
+        if AppSettings.mcpEnabled { MCPServer.shared.start() }
         setupModifierFlagsMonitor()
         setupActionObservers()
         applyAppearance(AppSettings.appearance)

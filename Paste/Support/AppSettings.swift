@@ -470,3 +470,32 @@ enum AppSettings {
     }
 }
 
+
+// MARK: - MCP server & screen sharing (Paste parity)
+
+extension AppSettings {
+    /// Local MCP server for AI tools (off by default, like Paste).
+    static var mcpEnabled: Bool {
+        get { bool("mcpEnabled", default: false) }
+        set { defaults.set(newValue, forKey: "mcpEnabled") }
+    }
+
+    /// Preferred MCP port; the server falls back to a free port when busy.
+    static var mcpPort: Int {
+        get { int("mcpPort", default: 39725) }
+        set { defaults.set(newValue, forKey: "mcpPort") }
+    }
+
+    /// When false the panel is excluded from screen capture (Paste's
+    /// "Show during screen sharing" toggle, inverted).
+    static var showDuringScreenSharing: Bool {
+        get { bool("showDuringScreenSharing", default: true) }
+        set { defaults.set(newValue, forKey: "showDuringScreenSharing") }
+    }
+
+    /// JSON-encoded [MCPClientRecord] of AI tools that have connected.
+    static var mcpConnectedToolsData: Data? {
+        get { defaults.data(forKey: "mcpConnectedTools") }
+        set { defaults.set(newValue, forKey: "mcpConnectedTools") }
+    }
+}

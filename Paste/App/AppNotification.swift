@@ -35,4 +35,6 @@ enum AppNotification {
     static let clipboardItemDragBegan = Notification.Name("clipboardItemDragBegan")
     /// A clipboard card drag gesture ended; userInfo["location"] carries the drop NSPoint.
     static let clipboardItemDragEnded = Notification.Name("clipboardItemDragEnded")
+    /// The MCP server's connected-client list changed; the MCP preferences pane should refresh.
+    static let mcpClientsChanged     = Notification.Name("mcpClientsChanged")
 }

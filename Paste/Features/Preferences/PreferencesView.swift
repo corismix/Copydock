@@ -9,47 +9,291 @@ import SwiftUI
 import ApplicationServices
 
 struct PreferencesView: View {
-    
+
     @StateObject private var viewModel = PreferencesViewModel()
-    @State private var selectedTab = 0
-    
-    var body: some View {
-        VStack(spacing: 12) {
-            HStack {
-                Spacer(minLength: 0)
-                Picker("", selection: $selectedTab) {
-                    Text("preferences.tab.general").tag(0)
-                    Text("preferences.tab.shortcuts").tag(1)
-                    Text("preferences.tab.rules").tag(2)
-                    Text("preferences.tab.sync").tag(3)
-                }
-                .pickerStyle(.segmented)
-                .labelsHidden()
-                .frame(width: 360)
-                Spacer(minLength: 0)
+    @State private var selectedTab: PrefsTab = .general
+
+    enum PrefsTab: String, CaseIterable {
+        case general, privacy, shortcuts, mcp, subscription
+
+        var title: String {
+            switch self {
+            case .general:      return String(localized: "preferences.tab.general")
+            case .privacy:      return "Privacy"
+            case .shortcuts:    return String(localized: "preferences.tab.shortcuts")
+            case .mcp:          return "MCP & AI Tools"
+            case .subscription: return "Subscription"
             }
-            .padding(.top, 12)
-            .padding(.horizontal, 16)
+        }
+
+        var icon: String {
+            switch self {
+            case .general:      return "gearshape"
+            case .privacy:      return "hand.raised"
+            case .shortcuts:    return "keyboard"
+            case .mcp:          return "point.3.connected.trianglepath.dotted"
+            case .subscription: return "checkmark.seal"
+            }
+        }
+    }
+
+    var body: some View {
+        HStack(spacing: 0) {
+            sidebar
+            Rectangle().fill(Color(nsColor: .separatorColor).opacity(0.4)).frame(width: 0.5)
+            content
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+        .frame(width: 920, height: 740)
+        .font(.system(size: 14))
+        .animation(.snappy(duration: 0.2), value: selectedTab)
+    }
+
+    // MARK: - Sidebar (Paste-style)
+
+    private var sidebar: some View {
+        VStack(alignment: .leading, spacing: 4) {
+            ForEach(PrefsTab.allCases, id: \.self) { tab in
+                Button {
+                    selectedTab = tab
+                } label: {
+                    HStack(spacing: 8) {
+                        Image(systemName: tab.icon)
+                            .font(.system(size: 13))
+                            .frame(width: 20)
+                            .foregroundColor(selectedTab == tab ? .white : .accentColor)
+                        Text(tab.title)
+                            .font(.system(size: 13, weight: selectedTab == tab ? .semibold : .regular))
+                            .foregroundColor(selectedTab == tab ? .white : .primary)
+                        Spacer(minLength: 0)
+                    }
+                    .padding(.horizontal, 10)
+                    .padding(.vertical, 7)
+                    .background(
+                        RoundedRectangle(cornerRadius: 8, style: .continuous)
+                            .fill(selectedTab == tab ? Color.accentColor : Color.clear)
+                    )
+                    .contentShape(Rectangle())
+                }
+                .buttonStyle(.plain)
+            }
+
+            Spacer(minLength: 0)
+
+            Button {
+                NSWorkspace.shared.open(URL(string: "https://github.com/corismix/Copydock")!)
+            } label: {
+                HStack(spacing: 8) {
+                    Image(systemName: "questionmark.circle")
+                        .font(.system(size: 13))
+                        .frame(width: 20)
+                        .foregroundColor(.secondary)
+                    Text("Help Center")
+                        .font(.system(size: 13))
+                        .foregroundColor(.secondary)
+                    Spacer(minLength: 0)
+                }
+                .padding(.horizontal, 10)
+                .padding(.vertical, 7)
+                .contentShape(Rectangle())
+            }
+            .buttonStyle(.plain)
+        }
+        .padding(12)
+        .frame(width: 210)
+        .background(Color(nsColor: .underPageBackgroundColor))
+    }
+
+    // MARK: - Content
+
+    @ViewBuilder
+    private var content: some View {
+        VStack(alignment: .leading, spacing: 10) {
+            Text(selectedTab.title)
+                .font(.system(size: 22, weight: .bold))
+                .padding(.horizontal, 20)
+                .padding(.top, 16)
 
             Group {
                 switch selectedTab {
-                case 0:
-                    GeneralSettingsView(viewModel: viewModel)
-                case 1:
-                    ShortcutSettingsView(viewModel: viewModel)
-                case 2:
-                    RulesSettingsView(viewModel: viewModel)
-                default:
-                    SyncSettingsView(viewModel: viewModel)
+                case .general:      GeneralSettingsView(viewModel: viewModel)
+                case .privacy:      PrivacySettingsView(viewModel: viewModel)
+                case .shortcuts:    ShortcutSettingsView(viewModel: viewModel)
+                case .mcp:          MCPToolsSettingsView(viewModel: viewModel)
+                case .subscription: SubscriptionSettingsView()
                 }
             }
-            // Ensure content stays top-aligned after tab switches.
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
         }
-        .frame(width: 720, height: 640)
-        .controlSize(.small)
-        .font(.system(size: 14))
-        .animation(.snappy(duration: 0.2), value: selectedTab)
+    }
+}
+
+// MARK: - Privacy (Paste parity: capture rules + ignored apps)
+
+struct PrivacySettingsView: View {
+    @ObservedObject var viewModel: PreferencesViewModel
+
+    var body: some View {
+        PreferencesPage {
+            PreferenceCard {
+                PreferenceToggleRow("Show during screen sharing", isOn: Binding(
+                    get: { AppSettings.showDuringScreenSharing },
+                    set: { AppSettings.showDuringScreenSharing = $0 }
+                ))
+                PreferenceToggleRow("preferences.general.linkPreview", isOn: $viewModel.linkPreviewEnabled)
+                PreferenceToggleRow("Ignore confidential content", isOn: $viewModel.ignoreSensitiveContent)
+                PreferenceToggleRow("Ignore transient content", isOn: $viewModel.ignoreAutoGeneratedContent)
+            }
+
+            PreferenceCard(title: "Ignore Applications") {
+                ExcludedAppsView(viewModel: viewModel)
+            }
+        }
+    }
+}
+
+// MARK: - MCP & AI Tools (Paste parity: local MCP server)
+
+struct MCPToolsSettingsView: View {
+    @ObservedObject var viewModel: PreferencesViewModel
+    @State private var mcpEnabled = AppSettings.mcpEnabled
+    @State private var connectedTools: [MCPClientRecord] = MCPClientRecord.loadAll()
+    @State private var showAdvanced = false
+    @State private var portText = String(AppSettings.mcpPort)
+
+    private var serverURL: String { MCPServer.shared.serverURL }
+
+    var body: some View {
+        PreferencesPage {
+            PreferenceCard {
+                VStack(alignment: .leading, spacing: 4) {
+                    PreferenceToggleRow("Enable MCP", isOn: $mcpEnabled)
+                    Text("Allow AI apps to connect to Copydock. Only apps you approve can access your clipboard items and pinboards.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+
+                HStack(spacing: 8) {
+                    Circle()
+                        .fill(mcpEnabled ? Color.green : Color.gray)
+                        .frame(width: 8, height: 8)
+                    Text(serverURL)
+                        .font(.system(size: 13, design: .monospaced))
+                    Button {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(serverURL, forType: .string)
+                    } label: {
+                        Image(systemName: "doc.on.doc")
+                            .font(.system(size: 12))
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Copy MCP URL"))
+                    Spacer(minLength: 0)
+                    Button("Advanced...") { showAdvanced.toggle() }
+                        .controlSize(.small)
+                }
+                .opacity(mcpEnabled ? 1 : 0.5)
+
+                if showAdvanced {
+                    HStack(spacing: 8) {
+                        Text("Port")
+                            .foregroundStyle(.secondary)
+                        TextField("39725", text: $portText)
+                            .textFieldStyle(.roundedBorder)
+                            .frame(width: 90)
+                        Button("Apply") {
+                            if let port = Int(portText), port > 1024, port < 65536 {
+                                AppSettings.mcpPort = port
+                                if mcpEnabled { MCPServer.shared.start() }
+                            }
+                        }
+                        .controlSize(.small)
+                    }
+                }
+            }
+
+            Text("Connected AI Tools")
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(.secondary)
+
+            PreferenceCard {
+                if connectedTools.isEmpty {
+                    Text("No AI tools have connected yet.")
+                        .font(.system(size: 12))
+                        .foregroundStyle(.secondary)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                } else {
+                    ForEach(connectedTools, id: \.name) { tool in
+                        HStack(spacing: 10) {
+                            Image(systemName: "app.connected.to.app.below.fill")
+                                .font(.system(size: 16))
+                                .foregroundStyle(.secondary)
+                                .frame(width: 24)
+                            VStack(alignment: .leading, spacing: 1) {
+                                Text(tool.name)
+                                    .font(.system(size: 13, weight: .medium))
+                                Text("Last used " + RelativeDateTimeFormatter().localizedString(for: tool.lastUsed, relativeTo: Date()))
+                                    .font(.system(size: 11))
+                                    .foregroundStyle(.secondary)
+                            }
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.vertical, 2)
+                    }
+                }
+            }
+
+            HStack {
+                Spacer()
+                Menu {
+                    Button("Copy MCP URL") {
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(serverURL, forType: .string)
+                    }
+                    Button("Copy Claude Desktop config") {
+                        let config = "{\"mcpServers\": {\"copydock\": {\"url\": \"\(serverURL)\"}}}"
+                        NSPasteboard.general.clearContents()
+                        NSPasteboard.general.setString(config, forType: .string)
+                    }
+                } label: {
+                    Text("Connect AI Tool...")
+                }
+                .controlSize(.regular)
+            }
+        }
+        .onAppear { mcpEnabled = AppSettings.mcpEnabled }
+        .onChange(of: mcpEnabled) { _, new in
+            AppSettings.mcpEnabled = new
+            if new { MCPServer.shared.start() } else { MCPServer.shared.stop() }
+        }
+        .onReceive(NotificationCenter.default.publisher(for: AppNotification.mcpClientsChanged)) { _ in
+            connectedTools = MCPClientRecord.loadAll()
+        }
+    }
+}
+
+// MARK: - Subscription (Copydock is free)
+
+struct SubscriptionSettingsView: View {
+    var body: some View {
+        PreferencesPage {
+            PreferenceCard {
+                HStack(spacing: 12) {
+                    Image(systemName: "checkmark.seal.fill")
+                        .font(.system(size: 28))
+                        .foregroundStyle(.green)
+                    VStack(alignment: .leading, spacing: 4) {
+                        Text("Copydock is free")
+                            .font(.system(size: 15, weight: .semibold))
+                        Text("Every feature is unlocked, forever. Copydock is an open-source project - no subscription, no account, no tracking.")
+                            .font(.system(size: 12))
+                            .foregroundStyle(.secondary)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                }
+            }
+        }
     }
 }
 
