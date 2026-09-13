@@ -14,7 +14,7 @@ struct PreferencesView: View {
     @State private var selectedTab: PrefsTab = .general
 
     enum PrefsTab: String, CaseIterable {
-        case general, privacy, shortcuts, mcp, subscription
+        case general, privacy, shortcuts, mcp
 
         var title: String {
             switch self {
@@ -22,7 +22,6 @@ struct PreferencesView: View {
             case .privacy:      return "Privacy"
             case .shortcuts:    return String(localized: "preferences.tab.shortcuts")
             case .mcp:          return "MCP & AI Tools"
-            case .subscription: return "Subscription"
             }
         }
 
@@ -32,7 +31,6 @@ struct PreferencesView: View {
             case .privacy:      return "hand.raised"
             case .shortcuts:    return "keyboard"
             case .mcp:          return "point.3.connected.trianglepath.dotted"
-            case .subscription: return "checkmark.seal"
             }
         }
     }
@@ -120,7 +118,6 @@ struct PreferencesView: View {
                 case .privacy:      PrivacySettingsView(viewModel: viewModel)
                 case .shortcuts:    ShortcutSettingsView(viewModel: viewModel)
                 case .mcp:          MCPToolsSettingsView(viewModel: viewModel)
-                case .subscription: SubscriptionSettingsView()
                 }
             }
             .frame(maxWidth: .infinity, maxHeight: .infinity, alignment: .topLeading)
@@ -269,30 +266,6 @@ struct MCPToolsSettingsView: View {
         }
         .onReceive(NotificationCenter.default.publisher(for: AppNotification.mcpClientsChanged)) { _ in
             connectedTools = MCPClientRecord.loadAll()
-        }
-    }
-}
-
-// MARK: - Subscription (Copydock is free)
-
-struct SubscriptionSettingsView: View {
-    var body: some View {
-        PreferencesPage {
-            PreferenceCard {
-                HStack(spacing: 12) {
-                    Image(systemName: "checkmark.seal.fill")
-                        .font(.system(size: 28))
-                        .foregroundStyle(.green)
-                    VStack(alignment: .leading, spacing: 4) {
-                        Text("Copydock is free")
-                            .font(.system(size: 15, weight: .semibold))
-                        Text("Every feature is unlocked, forever. Copydock is an open-source project - no subscription, no account, no tracking.")
-                            .font(.system(size: 12))
-                            .foregroundStyle(.secondary)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                }
-            }
         }
     }
 }
